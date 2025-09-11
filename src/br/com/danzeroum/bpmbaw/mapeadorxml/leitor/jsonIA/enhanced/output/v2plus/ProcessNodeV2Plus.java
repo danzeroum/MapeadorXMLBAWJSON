@@ -88,16 +88,27 @@ public class ProcessNodeV2Plus {
      */
     @JsonProperty("metadata")
     private NodeMetadata metadata;
+    private boolean isEntryPoint;
+    private boolean isExitPoint;
 
-    // ❌ CAMPOS REMOVIDOS DEFINITIVAMENTE (Breaking Changes):
-    // - String script                    → logicRef (externalizado)
-    // - Object inlineConfiguration       → properties (estruturado)
-    // - List<String> conditions          → movido para edges
+    // CORRIGIDO: Métodos para resolver erros setEntryPoint/setExitPoint
+    public boolean isEntryPoint() { return isEntryPoint; }
 
-    // =========================================================================
-    // ENUMS E TIPOS
-    // =========================================================================
+    public void setIsEntryPoint(boolean entryPoint) {
+        this.isEntryPoint = entryPoint;
+        if (entryPoint && properties != null) {
+            properties.put("isEntry", true);
+        }
+    }
 
+    public boolean isExitPoint() { return isExitPoint; }
+
+    public void setIsExitPoint(boolean exitPoint) {
+        this.isExitPoint = exitPoint;
+        if (exitPoint && properties != null) {
+            properties.put("isExit", true);
+        }
+    }
     /**
      * Tipos de node BPMN 2.0 completos + TWX específicos
      */
@@ -589,12 +600,30 @@ public class ProcessNodeV2Plus {
         public boolean hasExternalizedLogic;   // true se tem logicRef
         public String migrationTimestamp;      // timestamp da migração
         public String migrationReason;         // razão da migração
+        public Map<String, String> annotations;
+        public NodeMetadata() {
+            this.annotations = new HashMap<String, String>();
+            this.migrationTimestamp = java.time.LocalDateTime.now().toString();
+        }
 
         @Override
         public String toString() {
             return String.format("NodeMetadata{source=%s, originalType=%s, hasScript=%s, hasLogic=%s}",
                     sourceVersion, originalType, hasLegacyScript, hasExternalizedLogic);
         }
+
+        public String getSourceVersion() { return sourceVersion; }
+        public void setSourceVersion(String sourceVersion) { this.sourceVersion = sourceVersion; }
+
+        public String getOriginalType() { return originalType; }
+        public void setOriginalType(String originalType) { this.originalType = originalType; }
+
+        public boolean isHasLegacyScript() { return hasLegacyScript; }
+        public void setHasLegacyScript(boolean hasLegacyScript) { this.hasLegacyScript = hasLegacyScript; }
+
+        public boolean isHasExternalizedLogic() { return hasExternalizedLogic; }
+        public void setHasExternalizedLogic(boolean hasExternalizedLogic) { this.hasExternalizedLogic = hasExternalizedLogic; }
+
     }
 
     // =========================================================================

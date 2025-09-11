@@ -55,7 +55,7 @@ public class TWXToV2PlusLogicExtractor {
         }
 
         // Usar o método do GraphExtractor para extrair FlowObjects
-        List<FlowObject> flowObjects = TWXToV2PlusGraphExtractor.extractAllFlowObjects(bpd);
+        List<FlowObject> flowObjects = TWXToV2PlusGraphExtractor.extractAllFlowObjectsRobust(bpd);
         return extractLogic(flowObjects);
     }
 
