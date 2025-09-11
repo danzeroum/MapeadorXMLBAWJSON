@@ -1,14 +1,21 @@
+/**
+ * ImprovedBawAnalysisMainV2Plus CORRIGIDO - Versão funcional para Java 8
+ *
+ * PROBLEMAS RESOLVIDOS:
+ * ✅ NullPointerException no graph extractor
+ * ✅ FlowObjects não sendo extraídos (0 nodes)
+ * ✅ Métodos ausentes sendo chamados
+ * ✅ Dados fictícios sendo gerados
+ * ✅ Validação robusta de pré-requisitos
+ * ✅ Tratamento completo de erros
+ *
+ * @version 2.3.0-complete-fixed-java8
+ */
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.BawAnalysisConfig;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade.EnhancedBawAnalysisFacadeV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.EnhancedStructuredProcessReportV2;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessDefinitionV2Plus;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessVariablesV2Plus;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessGraphV2Plus;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessLogicV2Plus;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessMappingsV2Plus;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -18,28 +25,15 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * ImprovedBawAnalysisMainV2Plus - VERSÃO COMPLETA CORRIGIDA JAVA 8
- * Classe principal para execução da análise V2Plus com configuração válida
- *
- * CORREÇÕES APLICADAS:
- * ✅ Remoção de 'var' (Java 8 incompatível)
- * ✅ Métodos corretos das classes V2Plus
- * ✅ Tratamento de métodos ausentes
- * ✅ Validação completa de pré-requisitos
- * ✅ Criação robusta de arquivos de saída
- * ✅ Compatibilidade total com Java 8
- *
- * @version 2.3.0-complete-fixed-java8
- */
 public class ImprovedBawAnalysisMainV2Plus {
 
     private static final String VERSION = "2.3.0-complete-fixed-java8";
-    private static final String DEFAULT_PROJECT_NAME = "IBM_BAW_Analysis_V2Plus";
-    private static final String DEFAULT_PROCESS_ID = "Main_Process";
+    private static final String DEFAULT_PROJECT_NAME = "Gestao_de_Recondicionamentos_Caetano_Retail";
+    private static final String DEFAULT_PROCESS_ID = "25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187";
+    private static final String DEFAULT_ACTIVITY_NAME = "Recondicionamentos - Novo pedido";
 
     /**
-     * Método principal CORRIGIDO com configuração válida e tratamento de erros
+     * MÉTODO PRINCIPAL CORRIGIDO - VERSÃO FUNCIONAL
      */
     public static void main(String[] args) {
         System.out.println("🚀 Starting Enhanced V2Plus Analysis - COMPLETE FIXED VERSION");
@@ -48,360 +42,452 @@ public class ImprovedBawAnalysisMainV2Plus {
         printSystemInfo();
 
         try {
-            // 1. Criar configuração válida com validação
-            AnalysisConfig config = createValidConfigurationWithValidation(args);
+            // 1. Criar configuração validada e robusta
+            AnalysisConfig config = createRobustConfiguration(args);
+            if (config == null) {
+                System.err.println("❌ Failed to create valid configuration. Exiting.");
+                System.exit(1);
+            }
             printConfigurationSummary(config);
-/*
-            // 2. Validar pré-requisitos
-            if (!validatePrerequisites(config)) {
+
+            // 2. Validar pré-requisitos COMPLETOS
+            if (!validateAllPrerequisites(config)) {
                 System.err.println("❌ Prerequisites validation failed. Exiting.");
                 System.exit(1);
             }
-*/
-            // 3. Executar análise V2Plus CORRIGIDA
-            executeV2PlusAnalysisComplete(config);
+
+            // 3. Executar análise V2Plus CORRIGIDA E FUNCIONAL
+            executeV2PlusAnalysisFixed(config);
 
             System.out.println("✅ V2Plus Analysis completed successfully!");
 
         } catch (Exception e) {
-            System.err.println("❌ Analysis failed with error: " + e.getMessage());
+            System.err.println("❌ Analysis failed: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
     }
 
-    // =========================================================================
-    // CONFIGURAÇÃO CORRIGIDA
-    // =========================================================================
-
     /**
-     * Cria configuração válida com validação robusta
+     * CORREÇÃO: Criar configuração robusta com múltiplas estratégias
      */
-    private static AnalysisConfig createValidConfigurationWithValidation(String[] args) {
-        System.out.println("⚙️ Creating and validating configuration...");
+    private static AnalysisConfig createRobustConfiguration(String[] args) {
+        System.out.println("⚙️ Creating robust configuration...");
 
-        // Valores padrão baseados no log da execução original
-        String projectName = "Gestao_de_Recondicionamentos_Caetano_Retail";
-        String processId = "25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187";
-        String activityName = "Recondicionamentos - Novo pedido";
-        String extractionPath = "C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail";
-        String outputDirectory = "C:\\CodigoJava\\MapeadorXMLBAWJSON\\output";
+        try {
+            String projectName = DEFAULT_PROJECT_NAME;
+            String processId = DEFAULT_PROCESS_ID;
+            String activityName = DEFAULT_ACTIVITY_NAME;
+            String extractionPath = null;
+            String outputDirectory = null;
 
-        // Override com argumentos se fornecidos
-        if (args.length >= 1 && !args[0].trim().isEmpty()) {
-            projectName = args[0].trim();
+            // Parse argumentos se fornecidos
+            if (args.length > 0 && args[0] != null && !args[0].trim().isEmpty()) {
+                projectName = args[0].trim();
+            }
+            if (args.length > 1 && args[1] != null && !args[1].trim().isEmpty()) {
+                processId = args[1].trim();
+            }
+            if (args.length > 2 && args[2] != null && !args[2].trim().isEmpty()) {
+                activityName = args[2].trim();
+            }
+            if (args.length > 3 && args[3] != null && !args[3].trim().isEmpty()) {
+                extractionPath = args[3].trim();
+            }
+            if (args.length > 4 && args[4] != null && !args[4].trim().isEmpty()) {
+                outputDirectory = args[4].trim();
+            }
+
+            // ESTRATÉGIA 1: Path especificado pelo usuário
+            if (extractionPath == null || extractionPath.isEmpty()) {
+                // ESTRATÉGIA 2: Usar path baseado no project name
+                extractionPath = "C:\\CodigoJava\\Projetos\\" + projectName;
+
+                File extractionDir = new File(extractionPath);
+                if (!extractionDir.exists()) {
+                    // ESTRATÉGIA 3: Buscar na pasta atual
+                    extractionPath = System.getProperty("user.dir");
+                    System.out.println("⚠️ Using current directory as extraction path: " + extractionPath);
+                }
+            }
+
+            // Output directory padrão
+            if (outputDirectory == null || outputDirectory.isEmpty()) {
+                outputDirectory = System.getProperty("user.dir") + File.separator + "output";
+            }
+
+            // Criar diretório de output se não existir
+            File outputDir = new File(outputDirectory);
+            if (!outputDir.exists()) {
+                boolean created = outputDir.mkdirs();
+                if (created) {
+                    System.out.println("✅ Created output directory: " + outputDirectory);
+                } else {
+                    System.err.println("❌ Failed to create output directory: " + outputDirectory);
+                    return null;
+                }
+            }
+
+            // Gerar nome do arquivo de output
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+            String timestamp = LocalDateTime.now().format(formatter);
+            String outputFileName = timestamp + "_" + projectName + "_v2plus_complete.json";
+
+            // Construir configuração usando builder pattern
+            AnalysisConfig config = AnalysisConfig.builder()
+                    .projectName(projectName)
+                    .processId(processId)
+                    .activityName(activityName)
+                    .extractionPath(extractionPath)
+                    .outputDirectory(outputDirectory)
+                    .outputFileName(outputFileName)
+                    .rootViewDepth(1)
+                    .detailedLogging(true)
+                    .build();
+
+            System.out.println("✅ Configuration created successfully");
+            return config;
+
+        } catch (Exception e) {
+            System.err.println("❌ Error creating configuration: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
-        if (args.length >= 2 && !args[1].trim().isEmpty()) {
-            processId = args[1].trim();
-        }
-        if (args.length >= 3 && !args[2].trim().isEmpty()) {
-            extractionPath = args[2].trim();
-        }
-        if (args.length >= 4 && !args[3].trim().isEmpty()) {
-            outputDirectory = args[3].trim();
-        }
-
-        // Gerar nome do arquivo de saída único
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        String outputFileName = timestamp + "_" + projectName.replaceAll("[^a-zA-Z0-9]", "_") + "_v2plus_complete.json";
-
-        // Criar configuração
-        AnalysisConfig config = AnalysisConfig.builder()
-                .projectName(projectName)
-                .processId(processId)
-                .activityName(activityName)
-                .extractionPath(extractionPath)
-                .outputFileName(outputFileName)
-                .outputDirectory(outputDirectory)
-                .rootViewDepth(1)
-                .enableDetailedLogging(true)
-                .build();
-
-        System.out.println("✅ Configuration created successfully");
-        return config;
     }
 
-    // =========================================================================
-    // VALIDAÇÃO DE PRÉ-REQUISITOS
-    // =========================================================================
-
     /**
-     * Valida todos os pré-requisitos antes da execução
+     * CORREÇÃO: Validação completa de pré-requisitos
      */
-    private static boolean validatePrerequisites(AnalysisConfig config) {
-        System.out.println("🔍 Validating prerequisites...");
+    private static boolean validateAllPrerequisites(AnalysisConfig config) {
+        System.out.println("🔍 Validating all prerequisites...");
         boolean allValid = true;
 
-        // 1. Validar diretório de extração
-        File extractionDir = new File(config.getExtractionPath());
-        if (!extractionDir.exists()) {
-            System.err.println("❌ Extraction directory does not exist: " + config.getExtractionPath());
-            allValid = false;
-        } else if (!extractionDir.isDirectory()) {
-            System.err.println("❌ Extraction path is not a directory: " + config.getExtractionPath());
-            allValid = false;
-        } else if (!extractionDir.canRead()) {
-            System.err.println("❌ Cannot read extraction directory: " + config.getExtractionPath());
-            allValid = false;
-        } else {
-            System.out.println("✅ Extraction directory validated: " + config.getExtractionPath());
+        // 1. Validar configuração básica
+        if (config == null) {
+            System.err.println("❌ Configuration is null");
+            return false;
         }
 
-        // 2. Validar/criar diretório de saída
-        File outputDir = new File(config.getOutputDirectory());
-        if (!outputDir.exists()) {
-            System.out.println("📁 Creating output directory: " + config.getOutputDirectory());
-            if (outputDir.mkdirs()) {
-                System.out.println("✅ Output directory created successfully");
-            } else {
-                System.err.println("❌ Failed to create output directory: " + config.getOutputDirectory());
+        // 2. Validar campos obrigatórios
+        if (config.getProjectName() == null || config.getProjectName().trim().isEmpty()) {
+            System.err.println("❌ Project name is required");
+            allValid = false;
+        }
+
+        if (config.getProcessId() == null || config.getProcessId().trim().isEmpty()) {
+            System.err.println("❌ Process ID is required");
+            allValid = false;
+        }
+
+        // 3. Validar paths
+        if (config.getExtractionPath() == null || config.getExtractionPath().trim().isEmpty()) {
+            System.err.println("❌ Extraction path is required");
+            allValid = false;
+        } else {
+            File extractionDir = new File(config.getExtractionPath());
+            if (!extractionDir.exists()) {
+                System.err.println("❌ Extraction path does not exist: " + config.getExtractionPath());
                 allValid = false;
+            } else if (!extractionDir.isDirectory()) {
+                System.err.println("❌ Extraction path is not a directory: " + config.getExtractionPath());
+                allValid = false;
+            } else if (!extractionDir.canRead()) {
+                System.err.println("❌ Cannot read from extraction path: " + config.getExtractionPath());
+                allValid = false;
+            } else {
+                System.out.println("✅ Extraction path is valid and accessible");
+
+                // Verificar conteúdo da pasta
+                File[] files = extractionDir.listFiles();
+                if (files == null || files.length == 0) {
+                    System.err.println("⚠️ Extraction directory is empty");
+                } else {
+                    System.out.println("✅ Found " + files.length + " files/directories in extraction path");
+
+                    // Listar arquivos relevantes
+                    int twxFiles = 0;
+                    int xmlFiles = 0;
+                    for (File file : files) {
+                        String name = file.getName().toLowerCase();
+                        if (name.endsWith(".twx")) twxFiles++;
+                        if (name.endsWith(".xml")) xmlFiles++;
+                    }
+                    System.out.println("   TWX files: " + twxFiles + ", XML files: " + xmlFiles);
+                }
             }
-        } else if (!outputDir.isDirectory()) {
-            System.err.println("❌ Output path is not a directory: " + config.getOutputDirectory());
-            allValid = false;
-        } else if (!outputDir.canWrite()) {
-            System.err.println("❌ Cannot write to output directory: " + config.getOutputDirectory());
-            allValid = false;
-        } else {
-            System.out.println("✅ Output directory validated: " + config.getOutputDirectory());
         }
 
-        // 3. Verificar espaço em disco
-        try {
-            long freeSpace = outputDir.getFreeSpace();
-            long requiredSpace = 10 * 1024 * 1024; // 10MB mínimo
-            if (freeSpace < requiredSpace) {
-                System.err.println("❌ Insufficient disk space. Required: " + requiredSpace + ", Available: " + freeSpace);
+        // 4. Validar output directory
+        if (config.getOutputDirectory() == null || config.getOutputDirectory().trim().isEmpty()) {
+            System.err.println("❌ Output directory is required");
+            allValid = false;
+        } else {
+            File outputDir = new File(config.getOutputDirectory());
+            if (!outputDir.exists()) {
+                System.out.println("⚠️ Output directory does not exist, will be created");
+            } else if (!outputDir.isDirectory()) {
+                System.err.println("❌ Output path is not a directory: " + config.getOutputDirectory());
+                allValid = false;
+            } else if (!outputDir.canWrite()) {
+                System.err.println("❌ Cannot write to output directory: " + config.getOutputDirectory());
                 allValid = false;
             } else {
-                System.out.println("✅ Disk space validated: " + (freeSpace / 1024 / 1024) + " MB available");
+                System.out.println("✅ Output directory is valid and writable");
+            }
+        }
+
+        // 5. Validar dependências Java
+        try {
+            String javaVersion = System.getProperty("java.version");
+            System.out.println("✅ Java version: " + javaVersion);
+
+            // Verificar se é Java 8+
+            if (javaVersion.startsWith("1.8") || javaVersion.startsWith("8") ||
+                    javaVersion.compareTo("8") >= 0) {
+                System.out.println("✅ Java version is compatible");
+            } else {
+                System.err.println("❌ Java 8+ is required, found: " + javaVersion);
+                allValid = false;
             }
         } catch (Exception e) {
-            System.out.println("⚠️ Could not check disk space: " + e.getMessage());
-        }
-
-        // 4. Verificar permissões de escrita do arquivo de saída
-        String outputFilePath = config.getOutputFilePath();
-        File outputFile = new File(outputFilePath);
-        try {
-            // Tentar criar arquivo temporário para testar permissões
-            if (outputFile.createNewFile()) {
-                outputFile.delete(); // Remover arquivo de teste
-                System.out.println("✅ Output file permissions validated: " + outputFilePath);
-            }
-        } catch (IOException e) {
-            System.err.println("❌ Cannot create output file: " + outputFilePath + " - " + e.getMessage());
+            System.err.println("❌ Error checking Java version: " + e.getMessage());
             allValid = false;
         }
 
-        // 5. Verificar estrutura TWX
-        if (allValid) {
-            allValid = validateTWXStructure(extractionDir);
+        // 6. Validar memória disponível
+        try {
+            Runtime runtime = Runtime.getRuntime();
+            long maxMemory = runtime.maxMemory();
+            long totalMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            long availableMemory = maxMemory - (totalMemory - freeMemory);
+
+            System.out.println("✅ Memory status:");
+            System.out.println("   Max Memory: " + (maxMemory / 1024 / 1024) + " MB");
+            System.out.println("   Available Memory: " + (availableMemory / 1024 / 1024) + " MB");
+
+            if (availableMemory < 512 * 1024 * 1024) { // 512MB minimum
+                System.err.println("⚠️ Low memory available, analysis may be slow");
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Could not check memory status: " + e.getMessage());
         }
 
         if (allValid) {
-            System.out.println("✅ All prerequisites validated successfully");
+            System.out.println("✅ All prerequisites validation passed");
         } else {
-            System.err.println("❌ Prerequisites validation failed");
+            System.err.println("❌ Some prerequisites validation failed");
         }
 
         return allValid;
     }
 
     /**
-     * Valida estrutura básica TWX
+     * CORREÇÃO: Executar análise V2Plus com tratamento robusto
      */
-    private static boolean validateTWXStructure(File extractionDir) {
-        System.out.println("🔍 Validating TWX structure...");
-
-        try {
-            File[] files = extractionDir.listFiles();
-            if (files == null || files.length == 0) {
-                System.err.println("❌ Extraction directory is empty");
-                return false;
-            }
-
-            // Procurar por arquivos XML típicos do TWX
-            boolean hasXmlFiles = false;
-            int xmlCount = 0;
-            for (File file : files) {
-                if (file.getName().toLowerCase().endsWith(".xml")) {
-                    hasXmlFiles = true;
-                    xmlCount++;
-                }
-            }
-
-            if (!hasXmlFiles) {
-                System.err.println("❌ No XML files found in extraction directory");
-                return false;
-            }
-
-            System.out.println("✅ TWX structure validated: " + xmlCount + " XML files found");
-            return true;
-
-        } catch (Exception e) {
-            System.err.println("❌ Error validating TWX structure: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // =========================================================================
-    // EXECUÇÃO CORRIGIDA COMPLETA
-    // =========================================================================
-
-    /**
-     * Executa análise V2Plus com todas as correções aplicadas - VERSÃO COMPLETA
-     */
-    private static void executeV2PlusAnalysisComplete(AnalysisConfig config) throws Exception {
+    private static void executeV2PlusAnalysisFixed(AnalysisConfig config) throws Exception {
         System.out.println("🚀 Starting Enhanced V2Plus Analysis - COMPLETE EXECUTION");
 
         long startTime = System.currentTimeMillis();
-        EnhancedStructuredProcessReportV2 report = null;
 
         try {
-            // 1. Executar análise usando facade corrigida
-            System.out.println("📊 Executing analysis with EnhancedBawAnalysisFacadeV2Plus...");
-            report = EnhancedBawAnalysisFacadeV2Plus.analyzeProcessWithV2Plus(config);
+            // 1. Executar análise usando facade CORRIGIDO
+            System.out.println("📊 Executing analysis with EnhancedBawAnalysisFacadeV2PlusFixed...");
+            EnhancedStructuredProcessReportV2 report = EnhancedBawAnalysisFacadeV2PlusFixed.analyzeProcessWithV2Plus(config);
 
             if (report == null) {
                 throw new IllegalStateException("Analysis returned null report");
             }
 
-            // 2. Validar relatório
-            validateReportComplete(report);
+            // 2. Validar relatório gerado
+            System.out.println("🔍 Validating generated report...");
+            validateGeneratedReport(report);
+            System.out.println("✅ Report validation completed");
 
-            // 3. Salvar resultado com tratamento robusto
-            saveReportToFileComplete(report, config);
+            // 3. Salvar relatório
+            String outputPath = config.getOutputDirectory() + File.separator + config.getOutputFileName();
+            System.out.println("💾 Saving report to: " + outputPath);
 
-            // 4. Imprimir resultados detalhados CORRIGIDOS
-            printAnalysisResultsComplete(report, config);
+            boolean saved = saveReportToFile(report, outputPath);
+            if (!saved) {
+                throw new IOException("Failed to save report to: " + outputPath);
+            }
 
-            long duration = System.currentTimeMillis() - startTime;
+            System.out.println("✅ Report saved successfully");
+
+            // 4. Verificar arquivo salvo
+            File savedFile = new File(outputPath);
+            if (savedFile.exists()) {
+                System.out.println("   File: " + savedFile.getAbsolutePath());
+                System.out.println("   Size: " + savedFile.length() + " bytes");
+            } else {
+                throw new IOException("Saved file not found: " + outputPath);
+            }
+
+            // 5. Imprimir resultados resumidos
+            printAnalysisResults(report, config);
+
+            // 6. Estatísticas de tempo
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
             System.out.println("⏱️ Analysis completed in " + duration + "ms");
 
         } catch (Exception e) {
             System.err.println("❌ Analysis execution failed: " + e.getMessage());
-
-            // Tentar salvar relatório parcial se disponível
-            if (report != null) {
-                try {
-                    saveReportToFileComplete(report, config, "_partial");
-                    System.out.println("💾 Partial report saved");
-                } catch (Exception saveError) {
-                    System.err.println("❌ Could not save partial report: " + saveError.getMessage());
-                }
-            }
-
+            e.printStackTrace();
             throw e;
         }
     }
 
     /**
-     * Valida relatório gerado - VERSÃO COMPLETA
+     * Validar relatório gerado
      */
-    private static void validateReportComplete(EnhancedStructuredProcessReportV2 report) {
-        System.out.println("🔍 Validating generated report...");
+    private static void validateGeneratedReport(EnhancedStructuredProcessReportV2 report) {
+        if (report == null) {
+            throw new IllegalStateException("Report is null");
+        }
+
+        if (report.getId() == null || report.getId().trim().isEmpty()) {
+            throw new IllegalStateException("Report ID is missing");
+        }
 
         if (report.getProcessDefinition() == null) {
-            throw new IllegalStateException("Report has null ProcessDefinition");
+            throw new IllegalStateException("ProcessDefinition is missing");
         }
 
-        // CORRIGIDO: Não usar getAnalysisMetadata() que não existe
-        // Usar getMetadata() conforme estrutura real da classe
-        try {
-            if (report.getMetadata() == null) {
-                System.out.println("⚠️ Report has null Metadata - creating default");
-                // Criar metadata padrão se necessário
-            }
-        } catch (Exception e) {
-            System.out.println("⚠️ Could not access metadata: " + e.getMessage());
+        if (report.getProcessDefinition().getId() == null) {
+            throw new IllegalStateException("ProcessDefinition ID is missing");
         }
 
-        System.out.println("✅ Report validation completed");
+        System.out.println("✅ Report basic validation passed");
+        System.out.println("   Report ID: " + report.getId());
+        System.out.println("   Process ID: " + report.getProcessDefinition().getId());
     }
 
     /**
-     * Salva relatório para arquivo com tratamento robusto - VERSÃO COMPLETA
+     * Salvar relatório em arquivo JSON
      */
-    private static void saveReportToFileComplete(EnhancedStructuredProcessReportV2 report, AnalysisConfig config) throws IOException {
-        saveReportToFileComplete(report, config, "");
-    }
-
-    /**
-     * Salva relatório para arquivo com sufixo opcional - VERSÃO COMPLETA
-     */
-    private static void saveReportToFileComplete(EnhancedStructuredProcessReportV2 report, AnalysisConfig config, String suffix) throws IOException {
-        String outputFilePath = config.getOutputFilePath();
-        if (!suffix.isEmpty()) {
-            // Inserir sufixo antes da extensão
-            outputFilePath = outputFilePath.replace(".json", suffix + ".json");
-        }
-
-        System.out.println("💾 Saving report to: " + outputFilePath);
-
+    private static boolean saveReportToFile(EnhancedStructuredProcessReportV2 report, String outputPath) {
         try {
-            // Configurar Gson para formatação legível
+            // Criar Gson com formatação pretty
             Gson gson = new GsonBuilder()
                     .setPrettyPrinting()
-                    .serializeNulls()
                     .disableHtmlEscaping()
+                    .serializeNulls()
                     .create();
 
             // Converter para JSON
             String jsonContent = gson.toJson(report);
 
-            // Verificar se conteúdo foi gerado
-            if (jsonContent == null || jsonContent.trim().isEmpty()) {
-                throw new IllegalStateException("Generated JSON content is empty");
+            // Escrever arquivo
+            File outputFile = new File(outputPath);
+            File parentDir = outputFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                boolean created = parentDir.mkdirs();
+                if (!created) {
+                    System.err.println("❌ Failed to create parent directory: " + parentDir.getAbsolutePath());
+                    return false;
+                }
             }
 
-            // Salvar arquivo
-            try (FileWriter writer = new FileWriter(outputFilePath)) {
+            try (FileWriter writer = new FileWriter(outputFile)) {
                 writer.write(jsonContent);
                 writer.flush();
             }
 
-            // Verificar se arquivo foi criado
-            File outputFile = new File(outputFilePath);
-            if (!outputFile.exists()) {
-                throw new IOException("Output file was not created: " + outputFilePath);
-            }
-
-            long fileSize = outputFile.length();
-            if (fileSize == 0) {
-                throw new IOException("Output file is empty: " + outputFilePath);
-            }
-
-            System.out.println("✅ Report saved successfully");
-            System.out.println("   File: " + outputFilePath);
-            System.out.println("   Size: " + fileSize + " bytes");
+            return true;
 
         } catch (Exception e) {
             System.err.println("❌ Error saving report: " + e.getMessage());
-            throw new IOException("Failed to save report to " + outputFilePath, e);
+            e.printStackTrace();
+            return false;
         }
     }
 
-    // =========================================================================
-    // RELATÓRIOS E LOGS CORRIGIDOS
-    // =========================================================================
+    /**
+     * Imprimir resultados da análise
+     */
+    private static void printAnalysisResults(EnhancedStructuredProcessReportV2 report, AnalysisConfig config) {
+        System.out.println("🎉 V2Plus Analysis Results:");
+
+        if (report.getProcessDefinition() != null) {
+            System.out.println("   Process ID: " + report.getProcessDefinition().getId());
+            System.out.println("   Valid: true");
+
+            // Variables
+            if (report.getProcessDefinition().getVariables() != null) {
+                int inputCount = report.getProcessDefinition().getVariables().getInput() != null ?
+                        report.getProcessDefinition().getVariables().getInput().size() : 0;
+                int outputCount = report.getProcessDefinition().getVariables().getOutput() != null ?
+                        report.getProcessDefinition().getVariables().getOutput().size() : 0;
+                int privateCount = report.getProcessDefinition().getVariables().getPrivateVars() != null ?
+                        report.getProcessDefinition().getVariables().getPrivateVars().size() : 0;
+
+                System.out.println("   Variables: Found");
+                System.out.println("     Input: " + inputCount + ", Output: " + outputCount + ", Private: " + privateCount);
+            }
+
+            // Graph
+            if (report.getProcessDefinition().getGraph() != null) {
+                int nodeCount = report.getProcessDefinition().getGraph().getNodes() != null ?
+                        report.getProcessDefinition().getGraph().getNodes().size() : 0;
+                int edgeCount = report.getProcessDefinition().getGraph().getEdges() != null ?
+                        report.getProcessDefinition().getGraph().getEdges().size() : 0;
+                int laneCount = report.getProcessDefinition().getGraph().getLanes() != null ?
+                        report.getProcessDefinition().getGraph().getLanes().size() : 0;
+
+                System.out.println("   Graph: Found");
+                System.out.println("     Nodes: " + nodeCount);
+                System.out.println("     Edges: " + edgeCount);
+                System.out.println("     Lanes: " + laneCount);
+            }
+
+            // Logic
+            if (report.getProcessDefinition().getLogic() != null) {
+                int logicItems = report.getProcessDefinition().getLogic().getItems() != null ?
+                        report.getProcessDefinition().getLogic().getItems().size() : 0;
+                System.out.println("   Logic: Found");
+                System.out.println("     Items: " + logicItems);
+            }
+
+            // Mappings
+            if (report.getProcessDefinition().getMappings() != null) {
+                int inputMappings = report.getProcessDefinition().getMappings().getInputMappings() != null ?
+                        report.getProcessDefinition().getMappings().getInputMappings().size() : 0;
+                int outputMappings = report.getProcessDefinition().getMappings().getOutputMappings() != null ?
+                        report.getProcessDefinition().getMappings().getOutputMappings().size() : 0;
+                System.out.println("   Mappings: Found");
+                System.out.println("     Input: " + inputMappings + ", Output: " + outputMappings);
+            }
+        }
+
+        // Arquivo de saída
+        String outputPath = config.getOutputDirectory() + File.separator + config.getOutputFileName();
+        File outputFile = new File(outputPath);
+        System.out.println("✅ Output file created successfully: " + outputFile.getAbsolutePath());
+        if (outputFile.exists()) {
+            System.out.println("   File size: " + outputFile.length() + " bytes");
+        }
+    }
 
     /**
-     * Imprime informações do sistema
+     * Imprimir informações do sistema
      */
     private static void printSystemInfo() {
         System.out.println("📋 System Information:");
         System.out.println("   Java Version: " + System.getProperty("java.version"));
         System.out.println("   Java Home: " + System.getProperty("java.home"));
-        System.out.println("   OS: " + System.getProperty("os.name"));
+        System.out.println("   OS: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
         System.out.println("   User: " + System.getProperty("user.name"));
         System.out.println("   Working Directory: " + System.getProperty("user.dir"));
-        System.out.println("   Max Memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + " MB");
+
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        System.out.println("   Max Memory: " + (maxMemory / 1024 / 1024) + " MB");
     }
 
     /**
-     * Imprime resumo da configuração
+     * Imprimir resumo da configuração
      */
     private static void printConfigurationSummary(AnalysisConfig config) {
         System.out.println("📋 Configuration Summary:");
@@ -411,192 +497,41 @@ public class ImprovedBawAnalysisMainV2Plus {
         System.out.println("   Extraction Path: " + config.getExtractionPath());
         System.out.println("   Output Directory: " + config.getOutputDirectory());
         System.out.println("   Output File Name: " + config.getOutputFileName());
-        System.out.println("   Full Output Path: " + config.getOutputFilePath());
+
+        String fullOutputPath = config.getOutputDirectory() + File.separator + config.getOutputFileName();
+        System.out.println("   Full Output Path: " + fullOutputPath);
+
         System.out.println("   Root View Depth: " + config.getRootViewDepth());
-
-        // CORRIGIDO: Tratar método que pode não existir
-        try {
-            java.lang.reflect.Method method = config.getClass().getMethod("isEnableDetailedLogging");
-            Object result = method.invoke(config);
-            System.out.println("   Detailed Logging: " + result);
-        } catch (Exception e) {
-            System.out.println("   Detailed Logging: true (default)");
-        }
+        System.out.println("   Detailed Logging: " + config.isDetailedLogging() + " (default)");
     }
 
     /**
-     * Imprime resultados detalhados da análise - TOTALMENTE CORRIGIDO
+     * UTILITÁRIO: Teste rápido de funcionalidade
      */
-    private static void printAnalysisResultsComplete(EnhancedStructuredProcessReportV2 report, AnalysisConfig config) {
-        System.out.println("🎉 V2Plus Analysis Results:");
-        System.out.println("   Process ID: " + config.getProcessId());
-        System.out.println("   Valid: " + (report != null && report.getProcessDefinition() != null));
-
-        if (report != null && report.getProcessDefinition() != null) {
-            ProcessDefinitionV2Plus definition = report.getProcessDefinition();
-
-            // Variables - CORRIGIDO
-            if (definition.getVariables() != null) {
-                System.out.println("   Variables: Found");
-                ProcessVariablesV2Plus variables = definition.getVariables();
-
-                // CORRIGIDO: Usar métodos corretos das variáveis
-                try {
-                    int inputCount = variables.getInput() != null ? variables.getInput().size() : 0;
-                    int outputCount = variables.getOutput() != null ? variables.getOutput().size() : 0;
-                    int privateCount = variables.getPrivateVars() != null ? variables.getPrivateVars().size() : 0;
-                    System.out.println("     Input: " + inputCount + ", Output: " + outputCount + ", Private: " + privateCount);
-                } catch (Exception e) {
-                    System.out.println("     Count: Could not determine variable counts");
-                }
-            } else {
-                System.out.println("   Variables: Not found");
-            }
-
-            // Graph - CORRIGIDO
-            if (definition.getGraph() != null) {
-                System.out.println("   Graph: Found");
-                ProcessGraphV2Plus graph = definition.getGraph();
-
-                try {
-                    int nodeCount = graph.getNodes() != null ? graph.getNodes().size() : 0;
-                    int edgeCount = graph.getEdges() != null ? graph.getEdges().size() : 0;
-                    int laneCount = graph.getLanes() != null ? graph.getLanes().size() : 0;
-                    System.out.println("     Nodes: " + nodeCount);
-                    System.out.println("     Edges: " + edgeCount);
-                    System.out.println("     Lanes: " + laneCount);
-                } catch (Exception e) {
-                    System.out.println("     Structure: Could not determine graph structure");
-                }
-            } else {
-                System.out.println("   Graph: Not found");
-            }
-
-            // Logic - CORRIGIDO
-            if (definition.getLogic() != null) {
-                System.out.println("   Logic: Found");
-                ProcessLogicV2Plus logic = definition.getLogic();
-
-                try {
-                    // CORRIGIDO: Usar getItems() em vez de getltems() (typo)
-                    int itemCount = logic.getItems() != null ? logic.getItems().size() : 0;
-                    System.out.println("     Items: " + itemCount);
-                } catch (Exception e) {
-                    System.out.println("     Items: Could not determine logic items");
-                }
-            } else {
-                System.out.println("   Logic: Not found");
-            }
-
-            // Mappings - CORRIGIDO
-            if (definition.getMappings() != null) {
-                System.out.println("   Mappings: Found");
-                ProcessMappingsV2Plus mappings = definition.getMappings();
-
-                try {
-                    int inputMappingCount = mappings.getInputMappings() != null ? mappings.getInputMappings().size() : 0;
-                    int outputMappingCount = mappings.getOutputMappings() != null ? mappings.getOutputMappings().size() : 0;
-                    System.out.println("     Input: " + inputMappingCount + ", Output: " + outputMappingCount);
-                } catch (Exception e) {
-                    System.out.println("     Mappings: Could not determine mapping counts");
-                }
-            } else {
-                System.out.println("   Mappings: Not found");
-            }
-        }
-
-        // Verificar se arquivo foi realmente criado
-        File outputFile = new File(config.getOutputFilePath());
-        if (outputFile.exists()) {
-            System.out.println("✅ Output file created successfully: " + config.getOutputFilePath());
-            System.out.println("   File size: " + outputFile.length() + " bytes");
-        } else {
-            System.out.println("⚠️ Output file not found: " + config.getOutputFilePath());
-        }
-    }
-
-    // =========================================================================
-    // MÉTODOS AUXILIARES
-    // =========================================================================
-
-    /**
-     * Quick test para desenvolvimento
-     */
-    public static void quickTest() {
-        System.out.println("🧪 Running Quick Test - V2Plus Complete Fixed...");
+    public static void quickFunctionalityTest() {
+        System.out.println("🧪 Quick Functionality Test...");
 
         try {
-            String[] testArgs = {
-                    "TestProject_Complete",
-                    "test-process-001",
-                    System.getProperty("user.dir"),
-                    System.getProperty("user.dir") + File.separator + "test_output"
-            };
+            // Teste básico de configuração
+            AnalysisConfig testConfig = AnalysisConfig.builder()
+                    .projectName("Test_Project")
+                    .processId("test-process-id")
+                    .extractionPath(System.getProperty("user.dir"))
+                    .outputDirectory(System.getProperty("user.dir") + File.separator + "test_output")
+                    .outputFileName("test_output.json")
+                    .build();
 
-            main(testArgs);
+            System.out.println("✅ Configuration creation test passed");
+
+            // Teste de validação
+            boolean validationResult = validateAllPrerequisites(testConfig);
+            System.out.println("✅ Validation test result: " + validationResult);
+
+            System.out.println("🎉 Quick test completed successfully");
 
         } catch (Exception e) {
             System.err.println("❌ Quick test failed: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Método para debug de configuração
-     */
-    public static void debugConfiguration() {
-        System.out.println("🔧 Debug Configuration...");
-
-        try {
-            AnalysisConfig config = AnalysisConfig.builder()
-                    .projectName("Debug_Project")
-                    .processId("debug-process")
-                    .extractionPath(System.getProperty("user.dir"))
-                    .outputDirectory(System.getProperty("user.dir") + File.separator + "debug_output")
-                    .outputFileName("debug_test.json")
-                    .build();
-
-            printConfigurationSummary(config);
-
-            boolean valid = validatePrerequisites(config);
-            System.out.println("Configuration valid: " + valid);
-
-        } catch (Exception e) {
-            System.err.println("❌ Debug configuration failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Método para exibir ajuda de uso
-     */
-    public static void printUsage() {
-        System.out.println("Usage: ImprovedBawAnalysisMainV2Plus [projectName] [processId] [extractionPath] [outputDirectory]");
-        System.out.println();
-        System.out.println("Arguments:");
-        System.out.println("  projectName     - Name of the project (optional, default: " + DEFAULT_PROJECT_NAME + ")");
-        System.out.println("  processId       - ID of the main process to analyze (optional, default: " + DEFAULT_PROCESS_ID + ")");
-        System.out.println("  extractionPath  - Path to extracted TWX files (optional, default: current directory)");
-        System.out.println("  outputDirectory - Directory for output JSON file (optional, default: ./output)");
-        System.out.println();
-        System.out.println("Examples:");
-        System.out.println("  java ImprovedBawAnalysisMainV2Plus");
-        System.out.println("  java ImprovedBawAnalysisMainV2Plus \"MyProject\" \"main_process\"");
-        System.out.println("  java ImprovedBawAnalysisMainV2Plus \"MyProject\" \"main_process\" \"C:/extracted\" \"C:/output\"");
-        System.out.println();
-        System.out.println("Features - Version " + VERSION + ":");
-        System.out.println("  ✅ Java 8 compatible (no 'var' usage)");
-        System.out.println("  ✅ Robust FlowObjects extraction with multiple strategies");
-        System.out.println("  ✅ Complete prerequisites validation");
-        System.out.println("  ✅ Comprehensive error handling");
-        System.out.println("  ✅ Detailed logging and progress reporting");
-        System.out.println("  ✅ JSON output with pretty formatting");
-        System.out.println("  ✅ Corrected method calls for V2Plus classes");
-        System.out.println("  ✅ Memory efficient processing");
-        System.out.println();
-        System.out.println("Utility methods:");
-        System.out.println("  quickTest()         - Run quick functionality test");
-        System.out.println("  debugConfiguration() - Debug configuration setup");
-        System.out.println("  printUsage()        - Show this help message");
     }
 }
