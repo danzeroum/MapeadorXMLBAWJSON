@@ -1,0 +1,357 @@
+{
+  "metadata": {
+    "$schema": "https://processveritas.io/schema/process-v2plus/1.0.0.json",
+    "schemaVersion": "1.0.0",
+    "contentHash": "sha256-97f478edeb13c854e466d9f005107b69b40f69eb1e7c163f1f3898f2d0661010",
+    "provenance": {
+      "extraction": {
+        "reportVersion": "4.x-derived",
+        "sessionId": "demo-session",
+        "generatedAt": "2025-09-09T20:48:55Z",
+        "projectName": "Gestao_de_Recondicionamentos_Caetano_Retail"
+      },
+      "planoExecutivo": {
+        "versao": "ProcessVeritas_v3.5.2",
+        "gerado_em": "2025-09-06T18:02:50Z",
+        "mantra": "Do Essencial à Inteligência Contínua"
+      }
+    }
+  },
+  "businessContext": {
+    "domain": "General Business Process",
+    "glossary": {},
+    "userRoles": [],
+    "okrs": [],
+    "user_stories": {
+      "fase2": [],
+      "fase3": []
+    }
+  },
+  "dataTypes": [
+    {
+      "id": "dt:employee@1",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "id": "dt:orcamento@1",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "valor": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "BRL"
+          },
+          "diasUteis": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "valor"
+        ]
+      }
+    },
+    {
+      "id": "dt:recondicionamento@1",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dataInicioReparacaoAux": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "instalacao": {
+            "type": "object",
+            "properties": {
+              "marca": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "processDefinition": {
+    "variables": {
+      "input": [
+        {
+          "name": "recondicionamento",
+          "typeRef": "dt:recondicionamento@1",
+          "cardinality": "one",
+          "nullable": false
+        }
+      ],
+      "output": [
+        {
+          "name": "employee",
+          "typeRef": "dt:employee@1",
+          "cardinality": "one",
+          "nullable": true
+        }
+      ],
+      "private": [
+        {
+          "name": "orcamentoAux",
+          "typeRef": "dt:orcamento@1",
+          "cardinality": "one",
+          "nullable": false
+        },
+        {
+          "name": "validate",
+          "typeRef": "dt:orcamento@1",
+          "cardinality": "one",
+          "nullable": true
+        }
+      ]
+    },
+    "graph": {
+      "lanes": [
+        {
+          "id": "lane_ops",
+          "name": "Operações"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "n_start",
+          "type": "StartEvent",
+          "name": "Início",
+          "lane": "lane_ops"
+        },
+        {
+          "id": "n_validar_form",
+          "type": "ScriptTask",
+          "name": "Validar Formulario",
+          "logicRef": "lg:validar_form_reparacao",
+          "lane": "lane_ops"
+        },
+        {
+          "id": "n_eurotax",
+          "type": "ScriptTask",
+          "name": "Eurotax",
+          "logicRef": "lg:eurotax_script",
+          "lane": "lane_ops"
+        },
+        {
+          "id": "n_send_mail",
+          "type": "ServiceTask",
+          "name": "Send Mail",
+          "lane": "lane_ops"
+        },
+        {
+          "id": "n_gateway",
+          "type": "ExclusiveGateway",
+          "name": "Aprovado?",
+          "lane": "lane_ops"
+        },
+        {
+          "id": "n_rework",
+          "type": "UserTask",
+          "name": "Revisar Dados",
+          "lane": "lane_ops"
+        },
+        {
+          "id": "n_end",
+          "type": "EndEvent",
+          "name": "Fim",
+          "lane": "lane_ops"
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "n_start",
+          "target": "n_validar_form"
+        },
+        {
+          "id": "e2",
+          "source": "n_validar_form",
+          "target": "n_eurotax"
+        },
+        {
+          "id": "e3",
+          "source": "n_eurotax",
+          "target": "n_send_mail"
+        },
+        {
+          "id": "e4",
+          "source": "n_send_mail",
+          "target": "n_gateway"
+        },
+        {
+          "id": "e5",
+          "source": "n_gateway",
+          "target": "n_end",
+          "conditionRef": "cd:aprovado"
+        },
+        {
+          "id": "e6",
+          "source": "n_gateway",
+          "target": "n_rework",
+          "conditionRef": "cd:rejeitado"
+        }
+      ]
+    },
+    "conditions": [
+      {
+        "id": "cd:aprovado",
+        "expr": "size(validate.errors) == 0",
+        "exprLang": "cel"
+      },
+      {
+        "id": "cd:rejeitado",
+        "expr": "size(validate.errors) > 0",
+        "exprLang": "cel"
+      }
+    ],
+    "mappings": {
+      "exprLang": "cel",
+      "inputs": [
+        {
+          "target": "iIdBrandRepair",
+          "expr": "int(recondicionamento.instalacao.marca.value)"
+        }
+      ],
+      "outputs": [
+        {
+          "source": "orcamentoAux",
+          "target": "employee"
+        }
+      ]
+    },
+    "logic": {
+      "items": [
+        {
+          "id": "lg:validar_form_reparacao",
+          "language": "twjs",
+          "inputs": [
+            "recondicionamento"
+          ],
+          "outputs": [
+            "validate"
+          ],
+          "code": "tw.local.validate = new tw.object.CoachValidation();\nif (tw.local.recondicionamento.dataInicioReparacaoAux.date == undefined ||\n    tw.local.recondicionamento.dataInicioReparacaoAux.date == null) {\n  tw.system.addCoachValidationError(\n    tw.local.validate,\n    \"tw.local.recondicionamento.dataInicioReparacaoAux.date\",\n    \"Campo Obrigatório.\"\n  );\n}\n"
+        },
+        {
+          "id": "lg:eurotax_script",
+          "language": "twjs",
+          "inputs": [
+            "ioViatura"
+          ],
+          "outputs": [
+            "ioViatura"
+          ],
+          "code": "if (tw.local.ioViatura.eurotaxData.brand.name != undefined &&\n    tw.local.ioViatura.eurotaxData.brand.name != null &&\n    tw.local.ioViatura.eurotaxData.brand.name != \"\"){\n  if (tw.local.ioViatura.eurotaxData.brand.name != tw.resource.GRCR.selectDefaultLbl){\n    tw.local.ioViatura.marca = tw.local.ioViatura.eurotaxData.brand.name;\n  } else { tw.local.ioViatura.marca = null; }\n}\nif (tw.local.ioViatura.eurotaxData.model.name != undefined &&\n    tw.local.ioViatura.eurotaxData.model.name != null &&\n    tw.local.ioViatura.eurotaxData.model.name != \"\"){\n  if (tw.local.ioViatura.eurotaxData.model.name != tw.resource.GRCR.selectDefaultLbl){\n    tw.local.ioViatura.modelo = tw.local.ioViatura.eurotaxData.model.name;\n  } else { tw.local.ioViatura.modelo = null; }\n}\n"
+        }
+      ],
+      "validations": [
+        {
+          "id": "vl:data_inicio_obrigatoria",
+          "when": "nodeId == 'n_validar_form'",
+          "rule": "isNull(recondicionamento.dataInicioReparacaoAux.date)",
+          "severity": "error",
+          "messageKey": "campo.obrigatorio"
+        }
+      ]
+    }
+  },
+  "ui": {
+    "i18n": {
+      "defaultLocale": "pt-BR",
+      "bundles": {
+        "pt-BR": {
+          "campo.obrigatorio": "Campo Obrigatório."
+        }
+      }
+    },
+    "hints": {
+      "labels": [
+        {
+          "nodeId": "n_validar_form",
+          "label": "Validação inicial"
+        }
+      ],
+      "breadcrumbs": [
+        "Início",
+        "Validação",
+        "Eurotax",
+        "Mail",
+        "Gateway"
+      ]
+    }
+  },
+  "architecture": {
+    "bounded_contexts": [],
+    "adrs": {
+      "pre_fundacao": [],
+      "novas_v2": [],
+      "novas_v2_1": [],
+      "v2_5": []
+    },
+    "multi_tenancy": {},
+    "servicos": [],
+    "contratos_chave": {}
+  },
+  "interfaces": {
+    "eventos_bus": [],
+    "rest": []
+  },
+  "security": {
+    "scriptSandbox": true,
+    "pii": [],
+    "allowListAPIs": [],
+    "secretsRef": "urn:pv:secretstore:default"
+  },
+  "quality": {
+    "lintRules": {
+      "reservedNamesDenied": [
+        "Number",
+        "Date",
+        "Object",
+        "object"
+      ],
+      "variableCase": "camelCase",
+      "noInlineScripts": true,
+      "singleGraphTruth": true,
+      "requireTypeRefOnVariables": true,
+      "mappingsMustUseExprLang": [
+        "cel",
+        "jmespath"
+      ]
+    }
+  },
+  "metricsSchema": {
+    "counters": [
+      "executions",
+      "errors"
+    ],
+    "timers": [
+      "latencyP95"
+    ]
+  }
+}

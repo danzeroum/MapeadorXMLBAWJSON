@@ -1,0 +1,49 @@
+{
+  "overallValid" : true,
+  "validationErrors" : "",
+  "componentResults" : {
+    "graph" : {
+      "isValid" : true,
+      "errors" : "[]"
+    },
+    "logic" : {
+      "isValid" : true,
+      "errors" : "[]"
+    },
+    "variables" : {
+      "isValid" : true,
+      "errors" : "[]"
+    }
+  },
+  "executionResult" : {
+    "flowId" : "flow:validation_test",
+    "success" : true,
+    "startTime" : 1757494991589,
+    "endTime" : 1757494991589,
+    "executionTimeMs" : 0,
+    "outputData" : {
+      "calculosIntermedios" : null,
+      "orcamento.valorTotal" : "valor * quantidade * (1 + taxa)",
+      "recondicionamento" : {
+        "responsavel" : "João Silva",
+        "tipo" : "COMPLETO",
+        "valor" : 5000.0
+      },
+      "validacoes" : null,
+      "viatura" : {
+        "ano" : 2020,
+        "matricula" : "AB-12-34",
+        "tipo" : "LIGEIRO"
+      },
+      "viatura.matriculaFormatada" : "VIATURA.MATRICULA"
+    },
+    "errors" : [ ],
+    "warnings" : [ ],
+    "info" : [ ],
+    "itemsExecuted" : 3,
+    "transformationsApplied" : 2,
+    "validationsExecuted" : 0,
+    "metrics" : { }
+  },
+  "timestamp" : "Wed Sep 10 06:03:11 BRT 2025"
+}

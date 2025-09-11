@@ -1,0 +1,203 @@
+===============================================
+IBM BAW QUALITY ANALYSIS REPORT FOR AI
+===============================================
+Project: Gestao_de_Recondicionamentos_Caetano_Retail
+Process: 1.bb9e4380-1a35-4777-9cf8-4eecf125d679
+Generated: 20250908_144006
+
+OVERALL ASSESSMENT: Poor
+
+IDENTIFIED ISSUES:
+==================
+[Medium] Step 'SQL Recondicionamento' in artifact 'Update Reconditioning Request' has a long script (1035 chars)
+[Medium] Step 'SQL Parameters Recondicionamento' in artifact 'Update Reconditioning Request' has a long script (7323 chars)
+[Medium] Step: SQL Recondicionamento - Complex logic detected in artifact: Update Reconditioning Request
+[Medium] Step: SQL Parameters Recondicionamento - Complex logic detected in artifact: Update Reconditioning Request
+[Low] Unclear input mapping in step 'Statement Recondicionamento' of artifact 'Update Reconditioning Request': tw.local.query -> sql
+[Medium] Step 'get locale & set name' in artifact 'Get User Locale and Set Task sub' has a long script (3444 chars)
+[Medium] Step: get locale & set name - Complex logic detected in artifact: Get User Locale and Set Task sub
+[Low] Unclear input mapping in step 'SQL Execute Multiple Statements' of artifact 'SQL Execute Multiple Statements (SQLResult)': "SQLResult" -> returnType
+[Low] Step 'SQL Orçamento' in artifact 'Update All Reconditioning Data' contains Portuguese characters
+[Low] Step 'SQL Parameters Orçamento' in artifact 'Update All Reconditioning Data' contains Portuguese characters
+[Low] Step 'Statement Orçamento' in artifact 'Update All Reconditioning Data' contains Portuguese characters
+[Medium] Artifact 'Update All Reconditioning Data' has 63 steps, consider breaking into smaller processes
+[Medium] Artifact 'Update All Reconditioning Data' calls 15 subprocesses, consider consolidation
+[Medium] Step 'SQL Orçamento' in artifact 'Update All Reconditioning Data' has a long script (1943 chars)
+[Medium] Step 'SQL Parameters Orçamento' in artifact 'Update All Reconditioning Data' has a long script (14708 chars)
+[Medium] Step: SQL Orçamento - Complex logic detected in artifact: Update All Reconditioning Data
+[Medium] Step: SQL Parameters Orçamento - Complex logic detected in artifact: Update All Reconditioning Data
+[Low] Unclear input mapping in step 'Statement Orçamento' of artifact 'Update All Reconditioning Data': tw.local.query -> sql
+[Medium] Step 'Limpar Lista' in artifact 'Limpar Lista Items de Recondicionamento' has a long script (1383 chars)
+[Medium] Step: Limpar Lista - Complex logic detected in artifact: Limpar Lista Items de Recondicionamento
+[Low] Step 'Áreas Novas?' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'SQL Delete Serviços Adicionais' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'SQL Delete Parameters Serviços Adicionais' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'Statement Delete Serviços Adicionais' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'Serviços ?' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'Insert SQL Serviços Adicionais' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'Insert SQL Parameters Serviços Adicionais' in artifact 'Update Areas and Services' contains Portuguese characters
+[Low] Step 'Incrementar Contador Serviços Adicionais a registar' in artifact 'Update Areas and Services' contains Portuguese characters
+[Medium] Step 'SQL Parameters Areas Recondicionamento' in artifact 'Update Areas and Services' has a long script (632 chars)
+[Medium] Step 'Items Multiple Statement' in artifact 'Update Areas and Services' has a long script (641 chars)
+[Medium] Step 'Services Multiple Statement' in artifact 'Update Areas and Services' has a long script (720 chars)
+[Medium] Step 'SQL Pneus' in artifact 'Update Areas and Services' has a long script (881 chars)
+[Medium] Step 'SQL Parameters Pneus' in artifact 'Update Areas and Services' has a long script (5411 chars)
+[Medium] Step 'Insert SQL Parameters Serviços Adicionais' in artifact 'Update Areas and Services' has a long script (1965 chars)
+[Medium] Step 'SQL Nova Areas Recondicionamento' in artifact 'Update Areas and Services' has a long script (871 chars)
+[Medium] Step 'SQL Parameters Nova Area Recondicionamento' in artifact 'Update Areas and Services' has a long script (5217 chars)
+[Medium] Step: Iniciar contador - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Parameters Areas Recondicionamento - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: Items Multiple Statement - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Delete Parameters Serviços Adicionais - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: Services Multiple Statement - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Delete Parameters Wheels - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Pneus - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Parameters Pneus - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: Insert SQL Serviços Adicionais - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: Insert SQL Parameters Serviços Adicionais - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Nova Areas Recondicionamento - Complex logic detected in artifact: Update Areas and Services
+[Medium] Step: SQL Parameters Nova Area Recondicionamento - Complex logic detected in artifact: Update Areas and Services
+[Low] Unclear input mapping in step 'Statement Areas Recondicionamento' of artifact 'Update Areas and Services': tw.local.query -> sql
+[Low] Unclear input mapping in step 'Statement Delete Serviços Adicionais' of artifact 'Update Areas and Services': tw.local.query -> sql
+[Low] Unclear input mapping in step 'delete statement Pneus' of artifact 'Update Areas and Services': tw.local.query -> sql
+[Low] Unclear input mapping in step 'Insert Statement Pneus' of artifact 'Update Areas and Services': tw.local.query -> sql
+[Medium] Artifact 'Update Areas and Services' has 4 complex conditions, consider externalizing logic
+[Medium] Step 'SQL Parameters Historico Datas' in artifact 'Register Date Records' has a long script (3281 chars)
+[Medium] Step: SQL Historico Datas - Complex logic detected in artifact: Register Date Records
+[Medium] Step: SQL Parameters Historico Datas - Complex logic detected in artifact: Register Date Records
+[Low] Unclear input mapping in step 'Statement Historico Datas' of artifact 'Register Date Records': tw.local.query -> sql
+[Medium] Step 'Get Results' in artifact 'Get Dealer Structure Persons By Profile JAR' has a long script (608 chars)
+[Medium] Step 'SQL Parameters CSI' in artifact 'Get Dealer Structure Persons By Profile JAR' has a long script (1086 chars)
+[Medium] Step 'SQL Parameters 2' in artifact 'Get Dealer Structure Persons By Profile JAR' has a long script (900 chars)
+[Medium] Step 'By IdStructure' in artifact 'Get Dealer Structure Persons By Profile JAR' has a long script (1269 chars)
+[Medium] Step 'By IdPole' in artifact 'Get Dealer Structure Persons By Profile JAR' has a long script (1297 chars)
+[Medium] Step: SQL INTRGSC - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: SQL Parameters - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: Get Results - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: SQL CSI - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: SQL Parameters CSI - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: SQL INTRGSC 2 - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: SQL Parameters 2 - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: By IdStructure - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Medium] Step: By IdPole - Complex logic detected in artifact: Get Dealer Structure Persons By Profile JAR
+[Low] Unclear input mapping in step 'SQL Execute Statement' of artifact 'Get Dealer Structure Persons By Profile JAR': "Employee" -> returnType
+[Low] Step 'SQL Destinatarios Instalação' in artifact 'Register Entities' contains Portuguese characters
+[Low] Step 'SQL Parameters Destinatarios Instalação' in artifact 'Register Entities' contains Portuguese characters
+[Low] Step 'Verificar Destinatarios Instalação a registar' in artifact 'Register Entities' contains Portuguese characters
+[Medium] Step 'SQL Destinatarios Secretaria' in artifact 'Register Entities' has a long script (522 chars)
+[Medium] Step 'SQL Parameters Destinatarios Secretaria' in artifact 'Register Entities' has a long script (2152 chars)
+[Medium] Step 'SQL Destinatarios Instalação' in artifact 'Register Entities' has a long script (522 chars)
+[Medium] Step 'SQL Parameters Destinatarios Instalação' in artifact 'Register Entities' has a long script (2123 chars)
+[Medium] Step: SQL Destinatarios Secretaria - Complex logic detected in artifact: Register Entities
+[Medium] Step: SQL Parameters Destinatarios Secretaria - Complex logic detected in artifact: Register Entities
+[Medium] Step: SQL Destinatarios Instalação - Complex logic detected in artifact: Register Entities
+[Medium] Step: SQL Parameters Destinatarios Instalação - Complex logic detected in artifact: Register Entities
+[Medium] Step 'SQL Query' in artifact 'Get Employee' has a long script (2326 chars)
+[Medium] Step 'SQL Parameters' in artifact 'Get Employee' has a long script (3458 chars)
+[Medium] Step: Check params - Complex logic detected in artifact: Get Employee
+[Medium] Step: SQL Query - Complex logic detected in artifact: Get Employee
+[Medium] Step: SQL Parameters - Complex logic detected in artifact: Get Employee
+[Low] Unclear input mapping in step 'SQL Execute Statement' of artifact 'Get Employee': "Employee" -> returnType
+[Medium] Step: Gerar User List - Complex logic detected in artifact: Get Task Users
+[Low] Unclear input mapping in step 'Get Dealer Structure Persons By Profile' of artifact 'Get Task Users': tw.env.ID_GRCR_PORTAL_APP -> idPortalApp
+[Medium] Artifact 'Validar Avaliar Orçamento' contains Portuguese characters
+[Medium] Step 'Validar Formulario' in artifact 'Validar Avaliar Orçamento' has a long script (2495 chars)
+[Medium] Step: Validar Formulario - Complex logic detected in artifact: Validar Avaliar Orçamento
+[Medium] Step: Existem Reparadores? - Complex logic detected in artifact: Validar Avaliar Orçamento
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Variable 'decisao' uses mixed language in artifact 'Validar Avaliar Orçamento'
+[Low] Unclear input mapping in step 'Get Utilizadores Reparadora' of artifact 'Validar Avaliar Orçamento': tw.env.ID_REPAIR_PROFILE -> idProfilePortalApplication
+[Medium] Step 'Check params' in artifact 'Get Employee JAR' has a long script (1374 chars)
+[Medium] Step 'cardNumber' in artifact 'Get Employee JAR' has a long script (2148 chars)
+[Medium] Step 'cardNumber' in artifact 'Get Employee JAR' has complex script logic
+[Medium] Step 'idSociety' in artifact 'Get Employee JAR' has a long script (1314 chars)
+[Medium] Step 'idPerson' in artifact 'Get Employee JAR' has a long script (2153 chars)
+[Medium] Step 'idPerson' in artifact 'Get Employee JAR' has complex script logic
+[Medium] Step 'fiscalNumber' in artifact 'Get Employee JAR' has a long script (2160 chars)
+[Medium] Step 'fiscalNumber' in artifact 'Get Employee JAR' has complex script logic
+[Medium] Step 'idEmployee' in artifact 'Get Employee JAR' has a long script (2150 chars)
+[Medium] Step 'idEmployee' in artifact 'Get Employee JAR' has complex script logic
+[Medium] Step 'accountName' in artifact 'Get Employee JAR' has a long script (2557 chars)
+[Medium] Step 'accountName' in artifact 'Get Employee JAR' has complex script logic
+[Medium] Step: Check params - Complex logic detected in artifact: Get Employee JAR
+[Medium] Step: cardNumber - Complex logic detected in artifact: Get Employee JAR
+[Medium] Step: idSociety - Complex logic detected in artifact: Get Employee JAR
+[Medium] Step: idPerson - Complex logic detected in artifact: Get Employee JAR
+[Medium] Step: fiscalNumber - Complex logic detected in artifact: Get Employee JAR
+[Medium] Step: idEmployee - Complex logic detected in artifact: Get Employee JAR
+[Medium] Step: accountName - Complex logic detected in artifact: Get Employee JAR
+[Low] Step 'Filtrar Pessoas da Instalação e Do Perfil' in artifact 'Get Dealer Structure Persons By Profile' contains Portuguese characters
+[Medium] Step 'SQL DS Parameters' in artifact 'Get Dealer Structure Persons By Profile' has a long script (649 chars)
+[Medium] Step 'SQL Persons Parameters' in artifact 'Get Dealer Structure Persons By Profile' has a long script (680 chars)
+[Medium] Step 'Extrair CSI Accounts' in artifact 'Get Dealer Structure Persons By Profile' has a long script (816 chars)
+[Medium] Step: SQL DS Parameters - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: Extrair id Structure - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: SQL Persons Query - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: SQL Persons Parameters - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: Extrair id Persons - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step:  SQL CSI Accounts Query - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: SQL CSI Accounts Parameters - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: Extrair CSI Accounts - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: Filtrar Pessoas da Instalação e Do Perfil - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Medium] Step: Remover Repetidos - Complex logic detected in artifact: Get Dealer Structure Persons By Profile
+[Low] Unclear input mapping in step 'SQL DS Execute Statement' of artifact 'Get Dealer Structure Persons By Profile': tw.local.query -> sql
+[Low] Unclear input mapping in step 'SQL Persons Execute Statement' of artifact 'Get Dealer Structure Persons By Profile': tw.local.query -> sql
+[Low] Unclear input mapping in step 'SQL CSI Accounts Execute Statement' of artifact 'Get Dealer Structure Persons By Profile': tw.local.query -> sql
+[Low] Step 'Avaliar Orçamento' in artifact '3 - Avaliar Orcamento Impl' contains Portuguese characters
+[Low] Step 'Validar Avaliar Orçamento' in artifact '3 - Avaliar Orcamento Impl' contains Portuguese characters
+[Medium] Step 'Iniciar Vars' in artifact '3 - Avaliar Orcamento Impl' has a long script (1396 chars)
+[Medium] Step: Iniciar Vars - Complex logic detected in artifact: 3 - Avaliar Orcamento Impl
+[Low] Unclear input mapping in step 'Get Employee JAR' of artifact '3 - Avaliar Orcamento Impl': tw.system.user_loginName -> accountName
+[Low] Unclear input mapping in step 'Stringfy Reparador' of artifact '3 - Avaliar Orcamento Impl': tw.local.newRepairIdBrand.value -> marcaId
+[Low] Unclear input mapping in step 'SQL Execute Statement' of artifact 'SQL Execute Statement (SQLResult)': "SQLResult" -> returnType
+[Low] Step 'Tratar decisão' in artifact '3 - Avaliar Orcamento' contains Portuguese characters
+[Medium] Artifact '3 - Avaliar Orcamento' calls 12 subprocesses, consider consolidation
+[Medium] Step 'Iniciar Variaveis' in artifact '3 - Avaliar Orcamento' has a long script (1331 chars)
+[Medium] Step 'Tratar decisão' in artifact '3 - Avaliar Orcamento' has a long script (2443 chars)
+[Medium] Step: Iniciar Variaveis - Complex logic detected in artifact: 3 - Avaliar Orcamento
+[Medium] Step: Tratar decisão - Complex logic detected in artifact: 3 - Avaliar Orcamento
+[Low] Variable 'orcamentoAnterior' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAnterior' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'decisao' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'decisao' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'reorcamento' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'reorcamento' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAnterior' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'reorcamento' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+[Low] Variable 'orcamentoAux' uses mixed language in artifact '3 - Avaliar Orcamento'
+
+AI OPTIMIZATION RECOMMENDATIONS:
+=================================
+→ STANDARDIZE_NAMING: Standardize all process and step names to English for better AI interpretation
+→ EXTERNALIZE_LOGIC: Move complex JavaScript logic to separate service tasks or external services
+→ STANDARDIZE_VARIABLES: Use consistent English naming for all variables and parameters
