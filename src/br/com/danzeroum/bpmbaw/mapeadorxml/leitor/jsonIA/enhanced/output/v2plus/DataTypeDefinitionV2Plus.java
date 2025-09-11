@@ -29,7 +29,7 @@ public class DataTypeDefinitionV2Plus {
     private DataTypeMetadata metadata;
     private String baseType;
     private boolean isArray;
-
+    private String type;
     public void setBaseType(String baseType) { this.baseType = baseType; }
     public void setArray(boolean array) { this.isArray = array; }
 
@@ -63,6 +63,14 @@ public class DataTypeDefinitionV2Plus {
     public DataTypeMetadata getMetadata() { return metadata; }
     public void setMetadata(DataTypeMetadata metadata) {
         this.metadata = metadata != null ? metadata : new DataTypeMetadata();
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public static class DataTypeMetadata {
