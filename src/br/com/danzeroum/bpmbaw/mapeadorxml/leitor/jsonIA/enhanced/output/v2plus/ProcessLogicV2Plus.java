@@ -19,77 +19,26 @@ import java.util.stream.Collectors;
  *
  * @version 2.3.0-complete-fixed-java8
  */
-@JsonPropertyOrder({"items", "validations", "transformations", "dependencies", "config", "metadata", "statistics"})
+@JsonPropertyOrder({"items", "scripts", "validations", "transformations", "dependencies", "config", "metadata", "statistics"})
 public class ProcessLogicV2Plus {
 
     // =========================================================================
     // ENUMS CORRIGIDOS E COMPLETOS
     // =========================================================================
 
-    /**
-     * Tipos de items de lógica
-     */
     public enum ItemType {
-        SCRIPT("script"),
-        VALIDATION("validation"),
-        TRANSFORMATION("transformation"),
-        DECISION("decision"),
-        GATEWAY("gateway"),
-        SERVICE_CALL("service_call"),
-        DATA_MAPPING("data_mapping"),
-        BUSINESS_RULE("business_rule"),
-        SUBPROCESS("subprocess"),
-        TIMER("timer");
-
-        private final String value;
-
-        ItemType(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            return value;
-        }
+        SCRIPT, VALIDATION, TRANSFORMATION, DECISION, GATEWAY, SERVICE_CALL, DATA_MAPPING, BUSINESS_RULE, SUBPROCESS, TIMER
     }
 
-    /**
-     * Linguagens de script suportadas
-     */
     public enum ScriptLanguage {
-        JAVASCRIPT("javascript"),
-        GROOVY("groovy"),
-        JAVA("java"),
-        CEL("cel"),
-        PYTHON("python"),
-        SQL("sql"),
-        XPATH("xpath"),
-        JUEL("juel"),
-        MVEL("mvel");
-
-        private final String value;
-
-        ScriptLanguage(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            return value;
-        }
+        JAVASCRIPT, GROOVY, JAVA, CEL, PYTHON, SQL, XPATH, JUEL, MVEL
     }
-
     // =========================================================================
     // CAMPOS PRINCIPAIS
     // =========================================================================
+
+    @JsonProperty("scripts")
+    private List<LogicItemV2Plus> scripts;
 
     @JsonProperty("items")
     private List<LogicItemV2Plus> items;
@@ -123,6 +72,7 @@ public class ProcessLogicV2Plus {
      * Construtor padrão
      */
     public ProcessLogicV2Plus() {
+        this.scripts = new ArrayList<>();
         this.items = new ArrayList<LogicItemV2Plus>();
         this.validations = new ArrayList<ValidationRuleV2Plus>();
         this.transformations = new ArrayList<DataTransformationV2Plus>();
@@ -157,30 +107,67 @@ public class ProcessLogicV2Plus {
     // MÉTODOS PRINCIPAIS
     // =========================================================================
 
-    /**
-     * Adiciona logic item com validação
-     */
     public void addItem(LogicItemV2Plus item) {
         if (item == null) {
-            throw new IllegalArgumentException("Logic item cannot be null");
+            return;
         }
 
+        // Garante que o item tenha um ID para o índice
         if (item.getId() == null || item.getId().trim().isEmpty()) {
-            item.setId("lg:item_" + System.currentTimeMillis());
+            item.setId("lg:item_" + System.currentTimeMillis() + "_" + items.size());
         }
 
-        // Validar ID único
         if (itemIndex.containsKey(item.getId())) {
-            throw new IllegalArgumentException("Logic item with ID " + item.getId() + " already exists");
+            // Evita adicionar duplicatas
+            return;
         }
 
-        items.add(item);
-        itemIndex.put(item.getId(), item);
-
-        // Atualizar dependências
+        // Adiciona ao índice e à lista geral
+        this.items.add(item);
+        this.itemIndex.put(item.getId(), item);
         updateDependencies(item);
+
+        ItemType itemType = item.getType() != null ? item.getType() : ItemType.SCRIPT;
+
+        switch (itemType) {
+            case VALIDATION:
+                validations.add(convertItemToValidationRule(item));
+                break;
+            case TRANSFORMATION:
+            case DATA_MAPPING:
+                transformations.add(convertItemToTransformationRule(item));
+                break;
+            case SCRIPT:
+            case SERVICE_CALL:
+            case BUSINESS_RULE:
+            default: // Qualquer outro tipo é tratado como um script genérico
+                scripts.add(item);
+                break;
+        }
     }
 
+
+    private ValidationRuleV2Plus convertItemToValidationRule(LogicItemV2Plus item) {
+        ValidationRuleV2Plus rule = new ValidationRuleV2Plus();
+        rule.setId(item.getId());
+        rule.setName(item.getName());
+        rule.setDescription(item.getDescription());
+        rule.setFieldRef(item.getInputs().isEmpty() ? "undefined" : item.getInputs().get(0));
+        rule.setExpression(item.getCode());
+        rule.setType(ValidationRuleV2Plus.ValidationType.CUSTOM);
+        return rule;
+    }
+
+    private DataTransformationV2Plus convertItemToTransformationRule(LogicItemV2Plus item) {
+        DataTransformationV2Plus transform = new DataTransformationV2Plus();
+        transform.id = item.getId();
+        transform.name = item.getName();
+        transform.description = item.getDescription();
+        transform.setExpression(item.getCode());
+        transform.setSourceField(item.getInputs().isEmpty() ? "undefined" : String.join(", ", item.getInputs()));
+        transform.setTargetField(item.getOutputs().isEmpty() ? "undefined" : item.getOutputs().get(0));
+        return transform;
+    }
     /**
      * Encontra logic item por ID
      */
@@ -367,8 +354,42 @@ public class ProcessLogicV2Plus {
     }
 
     public void setItems(List<LogicItemV2Plus> items) {
-        this.items = items != null ? items : new ArrayList<LogicItemV2Plus>();
-        rebuildIndex();
+        if (items == null) {
+            this.items = new ArrayList<>();
+        } else {
+            this.items = items;
+        }
+        rebuildAndCategorizeAll();
+    }
+
+    private void rebuildAndCategorizeAll() {
+        // Limpa tudo para reconstruir do zero a partir da lista 'items'
+        this.scripts.clear();
+        this.validations.clear();
+        this.transformations.clear();
+        this.itemIndex.clear();
+        if (this.items != null) {
+            for (LogicItemV2Plus item : this.items) {
+                // Reaplica a lógica de categorização, evitando duplicação no índice
+                if (item != null && !itemIndex.containsKey(item.getId())) {
+                    this.itemIndex.put(item.getId(), item);
+                    updateDependencies(item);
+
+                    ItemType itemType = item.getType() != null ? item.getType() : ItemType.SCRIPT;
+                    switch (itemType) {
+                        case VALIDATION:
+                            validations.add(convertItemToValidationRule(item));
+                            break;
+                        case TRANSFORMATION: case DATA_MAPPING:
+                            transformations.add(convertItemToTransformationRule(item));
+                            break;
+                        default:
+                            scripts.add(item);
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     private void rebuildIndex() {
@@ -437,59 +458,8 @@ public class ProcessLogicV2Plus {
     /**
      * Regra de validação V2+
      */
-    public static class ValidationRuleV2Plus {
-        public String id;
-        public String name;
-        public String expression;
-        public String message;
-        public String description;
-        public String language;
-        public List<String> inputs;
-        public List<String> outputs;
-        public Map<String, Object> metadata;
 
-        public ValidationRuleV2Plus() {
-            this.inputs = new ArrayList<String>();
-            this.outputs = new ArrayList<String>();
-            this.metadata = new HashMap<String, Object>();
-            this.language = "cel";
-        }
-
-        // Getters e Setters
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
-
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-
-        public String getExpression() { return expression; }
-        public void setExpression(String expression) { this.expression = expression; }
-
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
-
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-
-        public String getLanguage() { return language; }
-        public void setLanguage(String language) { this.language = language; }
-
-        public List<String> getInputs() { return inputs; }
-        public void setInputs(List<String> inputs) { this.inputs = inputs; }
-
-        public List<String> getOutputs() { return outputs; }
-        public void setOutputs(List<String> outputs) { this.outputs = outputs; }
-
-        public Map<String, Object> getMetadata() { return metadata; }
-        public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
-
-        public boolean isValid() {
-            return id != null && !id.trim().isEmpty() &&
-                    expression != null && !expression.trim().isEmpty();
-        }
-    }
-
-    // =========================================================================
+    //=========================================================================
     // CLASSES INTERNAS - DATATRANSFORMATIONV2PLUS
     // =========================================================================
 

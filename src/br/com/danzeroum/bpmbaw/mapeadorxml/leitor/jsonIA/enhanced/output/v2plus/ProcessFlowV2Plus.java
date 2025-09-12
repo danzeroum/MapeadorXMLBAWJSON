@@ -291,12 +291,12 @@ public class ProcessFlowV2Plus {
 
         if (definition != null && definition.getLogic() != null) {
             // CORRIGIDO: Usar tipo correto das validações
-            List<ProcessLogicV2Plus.ValidationRuleV2Plus> validations = definition.getLogic().getValidations();
+            List<ValidationRuleV2Plus> validations = definition.getLogic().getValidations();
             stats.totalCount = validations.size();
 
             // Análise por severidade
             Map<String, Integer> severityCount = new HashMap<>();
-            for (ProcessLogicV2Plus.ValidationRuleV2Plus validation : validations) {
+            for (ValidationRuleV2Plus validation : validations) {
                 String severity = extractValidationSeverity(validation);
                 severityCount.put(severity, severityCount.getOrDefault(severity, 0) + 1);
             }
@@ -355,7 +355,7 @@ public class ProcessFlowV2Plus {
     /**
      * Extrai severidade de validação - CORRIGIDO
      */
-    private String extractValidationSeverity(ProcessLogicV2Plus.ValidationRuleV2Plus validation) {
+    private String extractValidationSeverity(ValidationRuleV2Plus validation) {
         if (validation == null) return "unknown";
 
         // Como ValidationRuleV2Plus pode não ter campo severity, usar padrão

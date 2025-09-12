@@ -27,12 +27,12 @@ public class TypeCompatibilityFix {
 
     // Para o problema de ValidationRuleV2Plus -> ValidationRuleV2Plus
     public static ValidationRuleV2Plus convertValidationRule(
-            ProcessLogicV2Plus.ValidationRuleV2Plus logicValidation) {
+            ValidationRuleV2Plus logicValidation) {
 
         ValidationRuleV2Plus rule = new ValidationRuleV2Plus();
         rule.setId(logicValidation.getId());
-        rule.setName(logicValidation.name);
-        rule.setDescription(logicValidation.message);
+        rule.setName(logicValidation.getName());
+        rule.setDescription(logicValidation.getDescription());
         // Mapear outros campos conforme necessário
         return rule;
     }
