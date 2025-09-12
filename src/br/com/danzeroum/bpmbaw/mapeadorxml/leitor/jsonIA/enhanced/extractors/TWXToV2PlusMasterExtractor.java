@@ -73,7 +73,7 @@ public class TWXToV2PlusMasterExtractor {
 
             // 2. Extrair graph (nodes/edges/lanes) CONFORME MODELO
             System.out.println("🔗 Extracting graph...");
-            ProcessGraphV2Plus graph = TWXToV2PlusGraphExtractor.extractGraph(bpd);
+            ProcessGraphV2Plus graph = TWXToV2PlusGraphExtractor.extractGraph(bpd, bpd.getId());
             definition.setGraph(graph);
 
             // 3. Extrair conditions CONFORME MODELO - CORRIGIDO
