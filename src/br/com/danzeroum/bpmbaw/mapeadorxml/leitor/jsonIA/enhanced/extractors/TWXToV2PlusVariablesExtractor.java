@@ -11,142 +11,255 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.PrivateVariable;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.twclass.Property;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.twclass.TwClass;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+/**
+ * VERSÃO FINAL - TWXToV2PlusVariablesExtractor
+ * Extrai variáveis enriquecidas e Data Types com JSON Schema, implementando
+ * detecção de ciclos, cache e fallbacks robustos, conforme a estratégia definida.
+ *
+ * @version 3.1.0
+ */
 public class TWXToV2PlusVariablesExtractor {
 
     private final ProcessLoaderV2Plus loader;
     private final Set<String> processedDataTypeIds = new HashSet<>();
+    private final Set<String> currentlyProcessing = new HashSet<>(); // Para detecção de ciclo
+    private final Map<String, DataTypeDefinitionV2Plus> dataTypeCache = new HashMap<>(); // Cache de performance
 
     public TWXToV2PlusVariablesExtractor(ProcessLoaderV2Plus loader) {
         this.loader = loader;
     }
 
     /**
-     * CORREÇÃO: Assinatura do método alterada para receber o objeto Bpd completo.
+     * Extrai as variáveis (input, output, private) de um Bpd, utilizando
+     * os métodos de conversão da classe VariableDefinitionV2Plus.
      */
     public ProcessVariablesV2Plus extractVariables(Bpd bpd) {
         ProcessVariablesV2Plus variables = new ProcessVariablesV2Plus();
         if (bpd == null) {
-            addFallbackVariables(variables);
             return variables;
         }
 
-        try {
-            // CORREÇÃO: Busca os parâmetros diretamente do objeto bpd.
-            if (bpd.getBpdParameters() != null) {
-                System.out.println("   📄 Found " + bpd.getBpdParameters().size() + " BPD parameters to process.");
-                for (BpdParameter param : bpd.getBpdParameters()) {
-                    ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = createVarDefFromBpdParameter(param);
-                    if (param.getParameterType() == 1) { // Input
-                        variables.addInputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
-                    } else { // Output
-                        variables.addOutputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+        // Extrai Parâmetros de Entrada/Saída do BPD
+        if (bpd.getBpdParameters() != null) {
+            for (BpdParameter param : bpd.getBpdParameters()) {
+                ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.fromBpdParameter(param);
+                if (param.getParameterType() == 1) { // Input
+                    variables.addInputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+                } else { // Output
+                    variables.addOutputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+                }
+            }
+        }
+
+        // Extrai Variáveis Privadas dos Pools
+        BusinessProcessDiagram diagram = bpd.getBusinessProcessDiagram();
+        if (diagram != null && diagram.getPools() != null) {
+            for (Pool pool : diagram.getPools()) {
+                if (pool.getPrivateVariables() != null) {
+                    for (PrivateVariable pVar : pool.getPrivateVariables()) {
+                        ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.fromPrivateVariable(pVar);
+                        variables.addPrivateVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
                     }
                 }
             }
+        }
+        return variables;
+    }
 
-            BusinessProcessDiagram diagram = bpd.getBusinessProcessDiagram();
-            if (diagram != null && diagram.getPools() != null) {
-                for (Pool pool : diagram.getPools()) {
-                    if (pool.getPrivateVariables() != null) {
-                        for (PrivateVariable pVar : pool.getPrivateVariables()) {
-                            ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = createVarDefFromPrivateVariable(pVar);
-                            variables.addPrivateVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+    /**
+     * Ponto de entrada para extrair todas as definições de tipo de dados.
+     */
+    public List<DataTypeDefinitionV2Plus> extractDataTypeDefinitions(ProcessVariablesV2Plus variables) {
+        List<DataTypeDefinitionV2Plus> dataTypes = new ArrayList<>();
+        processedDataTypeIds.clear();
+        addPrimitiveDataTypes(dataTypes); // Garante que os tipos básicos sempre existam
+
+        variables.getInput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
+        variables.getOutput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
+        variables.getPrivateVars().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
+
+        return dataTypes;
+    }
+
+    /**
+     * Processa um tipo de variável de forma recursiva, com proteções.
+     */
+    private void processVariableType(String typeRef, List<DataTypeDefinitionV2Plus> dataTypes) {
+        if (typeRef == null || processedDataTypeIds.contains(typeRef)) {
+            return; // Já processado ou inválido
+        }
+
+        // CRÍTICO: Detecção de ciclo, como sugerido
+        if (currentlyProcessing.contains(typeRef)) {
+            System.err.println("⚠️ Cycle detected for typeRef: " + typeRef + ". Skipping recursive processing.");
+            return;
+        }
+
+        // Otimização: Usa o cache se o tipo já foi gerado
+        if (dataTypeCache.containsKey(typeRef)) {
+            if (!processedDataTypeIds.contains(typeRef)) {
+                dataTypes.add(dataTypeCache.get(typeRef));
+                processedDataTypeIds.add(typeRef);
+            }
+            return;
+        }
+
+        currentlyProcessing.add(typeRef);
+        try {
+            String classId = typeRef.replace("dt:", "").replaceAll("@\\d+$", "");
+            Object artifact = loader.getArtefatoDoCache(classId);
+
+            if (artifact instanceof Teamworks && ((Teamworks) artifact).getTwClass() != null) {
+                TwClass twClass = ((Teamworks) artifact).getTwClass();
+
+                DataTypeDefinitionV2Plus dataType = new DataTypeDefinitionV2Plus();
+                dataType.setId(typeRef);
+                dataType.setName(twClass.getName());
+                dataType.setDescription(twClass.getDescription());
+                dataType.setJsonSchema(createJsonSchemaFromTwClass(twClass));
+
+                dataTypes.add(dataType);
+                processedDataTypeIds.add(typeRef);
+                dataTypeCache.put(typeRef, dataType); // Adiciona ao cache
+
+                // Processa recursivamente os tipos das propriedades internas
+                if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
+                    for (Property prop : twClass.getDefinition().getProperties()) {
+                        processVariableType(ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(prop.getClassRef()), dataTypes);
+                    }
+                }
+            }
+        } finally {
+            currentlyProcessing.remove(typeRef); // Garante a limpeza para futuras chamadas
+        }
+    }
+
+    /**
+     * Cria a estrutura JSON Schema a partir de um TwClass, com validação.
+     */
+    private Map<String, Object> createJsonSchemaFromTwClass(TwClass twClass) {
+        if (twClass == null) return createEmptySchema("Null TwClass object provided.");
+
+        try {
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+            schema.put("type", "object");
+            schema.put("title", twClass.getName());
+            schema.put("description", twClass.getDescription());
+
+            Map<String, Object> properties = new HashMap<>();
+            List<String> required = new ArrayList<>();
+
+            if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
+                for (Property prop : twClass.getDefinition().getProperties()) {
+                    if(prop.getName() != null) { // Validação de propriedade malformada
+                        properties.put(prop.getName(), createPropertySchema(prop));
+                        if (prop.isPropertyRequired()) {
+                            required.add(prop.getName());
                         }
                     }
                 }
             }
-
-            if (variables.getTotalVariableCount() == 0) {
-                addDefaultVariables(variables);
+            schema.put("properties", properties);
+            if (!required.isEmpty()) {
+                schema.put("required", required);
             }
-
+            return schema;
         } catch (Exception e) {
-            System.err.println("⚠️ Error extracting variables, using fallback: " + e.getMessage());
-            addFallbackVariables(variables);
-        }
-
-        return variables;
-    }
-
-    public List<DataTypeDefinitionV2Plus> extractDataTypeDefinitions(ProcessVariablesV2Plus variables) {
-        List<DataTypeDefinitionV2Plus> dataTypes = new ArrayList<>();
-        processedDataTypeIds.clear();
-        addPrimitiveDataTypes(dataTypes);
-        variables.getInput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
-        variables.getOutput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
-        variables.getPrivateVars().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
-        return dataTypes;
-    }
-
-    private void processVariableType(String typeRef, List<DataTypeDefinitionV2Plus> dataTypes) {
-        if (typeRef == null || processedDataTypeIds.contains(typeRef)) {
-            return;
-        }
-        String classId = typeRef.replace("dt:", "").replace("@1", "");
-        Object artifact = loader.getArtefatoDoCache(classId);
-        if (artifact instanceof Teamworks && ((Teamworks) artifact).getTwClass() != null) {
-            TwClass twClass = ((Teamworks) artifact).getTwClass();
-            DataTypeDefinitionV2Plus dataType = new DataTypeDefinitionV2Plus();
-            dataType.setId(typeRef);
-            dataType.setName(twClass.getName());
-            dataType.setDescription(twClass.getDescription());
-            if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
-                for (Property prop : twClass.getDefinition().getProperties()) {
-                    processVariableType(convertClassIdToTypeRef(prop.getClassRef()), dataTypes);
-                }
-            }
-            dataTypes.add(dataType);
-            processedDataTypeIds.add(typeRef);
+            System.err.println("Error creating JSON schema for " + twClass.getName() + ": " + e.getMessage());
+            return createFallbackSchema(twClass.getName());
         }
     }
 
-    private static void addDefaultVariables(ProcessVariablesV2Plus variables) {
-        if (variables.getTotalVariableCount() == 0) {
-            addFallbackVariables(variables);
+    private Map<String, Object> createPropertySchema(Property prop) {
+        Map<String, Object> propSchema = new HashMap<>();
+        String typeRef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(prop.getClassRef());
+
+        if (prop.isArrayProperty()) {
+            propSchema.put("type", "array");
+            Map<String, String> items = new HashMap<>();
+            // A referência aponta para a definição de tipo que será criada
+            items.put("$ref", "#/definitions/" + typeRef);
+            propSchema.put("items", items);
+        } else {
+            propSchema.put("$ref", "#/definitions/" + typeRef);
         }
+        propSchema.put("description", prop.getDescription());
+        return propSchema;
     }
 
-    private static void addFallbackVariables(ProcessVariablesV2Plus variables) {
-        variables.addInputVariable("defaultInput", "dt:string@1", "one", true, "Default input variable");
-        variables.addOutputVariable("defaultOutput", "dt:string@1", "one", true, "Default output variable");
-        variables.addPrivateVariable("defaultPrivate", "dt:object@1", "one", true, "Default private variable");
+    private Map<String, Object> createEmptySchema(String reason) {
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("type", "object");
+        schema.put("description", "Schema could not be generated: " + reason);
+        return schema;
     }
 
-    private static ProcessDefinitionV2Plus.VariableDefinitionV2Plus createVarDefFromBpdParameter(BpdParameter param) {
-        return new ProcessDefinitionV2Plus.VariableDefinitionV2Plus(
-                param.getName(), convertClassIdToTypeRef(param.getClassId()),
-                param.isArrayOf() ? "many" : "one", !param.isHasDefault(), param.getDocumentation());
+    private Map<String, Object> createFallbackSchema(String name) {
+        return createEmptySchema("Error during property processing for " + name);
     }
 
-    private static ProcessDefinitionV2Plus.VariableDefinitionV2Plus createVarDefFromPrivateVariable(PrivateVariable pVar) {
-        return new ProcessDefinitionV2Plus.VariableDefinitionV2Plus(
-                pVar.getName(), convertClassIdToTypeRef(pVar.getClassId()),
-                pVar.isArrayOf() ? "many" : "one", !pVar.isHasDefault(), "Private variable");
-    }
-
-    private static String convertClassIdToTypeRef(String classId) {
-        if (classId == null) return "dt:string@1";
-        switch (classId) {
-            case "String": return "dt:string@1";
-            case "Integer": return "dt:integer@1";
-            case "Boolean": return "dt:boolean@1";
-            case "Decimal": return "dt:decimal@1";
-            case "Date": return "dt:date@1";
-            default: return "dt:" + classId + "@1";
-        }
-    }
-
+    /**
+     * COMPLETO: Adiciona as definições de todos os tipos primitivos padrão do BAW.
+     */
     private void addPrimitiveDataTypes(List<DataTypeDefinitionV2Plus> dataTypes) {
-        if (processedDataTypeIds.add("dt:string@1")) dataTypes.add(new DataTypeDefinitionV2Plus("dt:string@1", "String", "String primitive type"));
-        if (processedDataTypeIds.add("dt:integer@1")) dataTypes.add(new DataTypeDefinitionV2Plus("dt:integer@1", "Integer", "Integer primitive type"));
-        if (processedDataTypeIds.add("dt:boolean@1")) dataTypes.add(new DataTypeDefinitionV2Plus("dt:boolean@1", "Boolean", "Boolean primitive type"));
-        if (processedDataTypeIds.add("dt:decimal@1")) dataTypes.add(new DataTypeDefinitionV2Plus("dt:decimal@1", "Decimal", "Decimal primitive type"));
-        if (processedDataTypeIds.add("dt:date@1")) dataTypes.add(new DataTypeDefinitionV2Plus("dt:date@1", "Date", "Date primitive type"));
-        if (processedDataTypeIds.add("dt:object@1")) dataTypes.add(new DataTypeDefinitionV2Plus("dt:object@1", "Object", "Generic object type"));
+        // String
+        if (processedDataTypeIds.add("dt:String@1")) {
+            DataTypeDefinitionV2Plus stringType = new DataTypeDefinitionV2Plus("dt:String@1", "String", "Primitive string type.");
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "string");
+            stringType.setJsonSchema(schema);
+            dataTypes.add(stringType);
+            dataTypeCache.put("dt:String@1", stringType);
+        }
+        // Integer
+        if (processedDataTypeIds.add("dt:Integer@1")) {
+            DataTypeDefinitionV2Plus intType = new DataTypeDefinitionV2Plus("dt:Integer@1", "Integer", "Primitive integer type.");
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "integer");
+            intType.setJsonSchema(schema);
+            dataTypes.add(intType);
+            dataTypeCache.put("dt:Integer@1", intType);
+        }
+        // Boolean
+        if (processedDataTypeIds.add("dt:Boolean@1")) {
+            DataTypeDefinitionV2Plus boolType = new DataTypeDefinitionV2Plus("dt:Boolean@1", "Boolean", "Primitive boolean type.");
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "boolean");
+            boolType.setJsonSchema(schema);
+            dataTypes.add(boolType);
+            dataTypeCache.put("dt:Boolean@1", boolType);
+        }
+        // Decimal
+        if (processedDataTypeIds.add("dt:Decimal@1")) {
+            DataTypeDefinitionV2Plus decimalType = new DataTypeDefinitionV2Plus("dt:Decimal@1", "Decimal", "Primitive decimal type.");
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "number");
+            decimalType.setJsonSchema(schema);
+            dataTypes.add(decimalType);
+            dataTypeCache.put("dt:Decimal@1", decimalType);
+        }
+        // Date
+        if (processedDataTypeIds.add("dt:Date@1")) {
+            DataTypeDefinitionV2Plus dateType = new DataTypeDefinitionV2Plus("dt:Date@1", "Date", "Primitive date type.");
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "string");
+            schema.put("format", "date-time");
+            dateType.setJsonSchema(schema);
+            dataTypes.add(dateType);
+            dataTypeCache.put("dt:Date@1", dateType);
+        }
+        // ANY (Object)
+        if (processedDataTypeIds.add("dt:ANY@1")) {
+            DataTypeDefinitionV2Plus anyType = new DataTypeDefinitionV2Plus("dt:ANY@1", "ANY", "Generic object type (ANY).");
+            Map<String, Object> schema = new HashMap<>();
+            schema.put("type", "object");
+            schema.put("description", "Can be any type of object.");
+            anyType.setJsonSchema(schema);
+            dataTypes.add(anyType);
+            dataTypeCache.put("dt:ANY@1", anyType);
+        }
     }
 }

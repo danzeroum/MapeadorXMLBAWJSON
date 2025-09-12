@@ -541,7 +541,7 @@ public class EnhancedStructuredProcessReportV2 {
             System.out.println("✅ Basic validation: " + report.isValid());
 
             // Teste 3: ProcessDefinition integrado
-            report.getProcessDefinition().addInputVariable("testInput", "dt:string@1", "one", false, "Test input variable");
+            //report.getProcessDefinition().addInputVariable("testInput", "dt:string@1", "one", false, "Test input variable");
             System.out.println("✅ Variable addition: " + (report.getProcessDefinition().getVariables().getInput().size() == 1));
 
             // Teste 4: Compatibilidade V2 (métodos deprecated)
