@@ -1,7 +1,7 @@
 // BusinessContextExtractor.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.services;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.model.BusinessContext;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.model.BusinessRule;
 
@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class BusinessContextExtractor {
 
-    public BusinessContext extractContext(String processId, ProcessLoader loader) {
+    public BusinessContext extractContext(String processId, ProcessLoaderV2Plus loader) {
         BusinessContext context = new BusinessContext();
 
         try {
@@ -78,7 +78,7 @@ public class BusinessContextExtractor {
         return terms;
     }
 
-    private Set<String> extractMainEntities(String processId, ProcessLoader loader) {
+    private Set<String> extractMainEntities(String processId, ProcessLoaderV2Plus loader) {
         Set<String> entities = new HashSet<>();
 
         // Entidades básicas inferidas do processo

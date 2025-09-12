@@ -17,9 +17,9 @@ public class RootViewBuilderService {
     private static final int DEFAULT_DEPTH_LIMIT = 1;
     private static final int MAX_STEPS_LIMIT = 1000; // Prevent runaway traversal
 
-    private final ProcessLoader processLoader;
+    private final ProcessLoaderV2Plus processLoader;
 
-    public RootViewBuilderService(ProcessLoader processLoader) {
+    public RootViewBuilderService(ProcessLoaderV2Plus processLoader) {
         this.processLoader = processLoader;
     }
 

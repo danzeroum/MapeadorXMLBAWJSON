@@ -13,7 +13,7 @@ import java.util.*;
 public class JsonReportNavigatorV3 {
 
     private final JsonReportGeneratorV2 generator;
-    private final ProcessLoader loader;
+    private final ProcessLoaderV2Plus loader;
 
     // Specialized services
     private final DependencyExtractorService dependencyExtractor;
@@ -28,7 +28,7 @@ public class JsonReportNavigatorV3 {
     /**
      * Constructor - initializes all specialized services.
      */
-    public JsonReportNavigatorV3(JsonReportGeneratorV2 generator, ProcessLoader loader) {
+    public JsonReportNavigatorV3(JsonReportGeneratorV2 generator, ProcessLoaderV2Plus loader) {
         this.generator = generator;
         this.loader = loader;
 
@@ -88,7 +88,7 @@ public class JsonReportNavigatorV3 {
      */
     private void processArtifact(String artifactId, Object artifactData) {
         // Find artifact info from loader
-        ProcessLoader.ArtifactLocation location = loader.findArtifactLocation(artifactId);
+        ProcessLoaderV2Plus.ArtifactLocation location = loader.findArtifactLocation(artifactId);
 
         String artifactName = location != null ? location.objectInfo.getName() : artifactId;
         String artifactType = location != null ? location.objectInfo.getType() : "Unknown";
@@ -507,7 +507,7 @@ public class JsonReportNavigatorV3 {
     // ========== GETTERS ==========
 
     public JsonReportGeneratorV2 getGenerator() { return generator; }
-    public ProcessLoader getLoader() { return loader; }
+    public ProcessLoaderV2Plus getLoader() { return loader; }
 
     // ========== INNER CLASSES (same as before) ==========
 

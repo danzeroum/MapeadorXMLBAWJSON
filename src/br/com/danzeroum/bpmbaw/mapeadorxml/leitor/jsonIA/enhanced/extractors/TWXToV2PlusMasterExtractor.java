@@ -73,7 +73,7 @@ public class TWXToV2PlusMasterExtractor {
 
             // 2. Extrair graph (nodes/edges/lanes) CONFORME MODELO
             System.out.println("🔗 Extracting graph...");
-            ProcessGraphV2Plus graph = TWXToV2PlusGraphExtractor.extractGraph(bpd, bpd.getId());
+            ProcessGraphV2Plus graph = GraphExtractorV2Plus.extractGraph(bpd);
             definition.setGraph(graph);
 
             // 3. Extrair conditions CONFORME MODELO - CORRIGIDO
@@ -124,7 +124,7 @@ public class TWXToV2PlusMasterExtractor {
 
         try {
             // Reutilizar lógica do GraphExtractor corrigido
-            return TWXToV2PlusGraphExtractor.extractAllFlowObjectsRobust(bpd);
+            return GraphExtractorV2Plus.extractAllFlowObjectsComplete(bpd);
         } catch (Exception e) {
             System.err.println("⚠️ Error extracting FlowObjects: " + e.getMessage());
             return new ArrayList<FlowObject>();

@@ -141,7 +141,7 @@ public class BawAnalysisIntegrationTest {
         // Test ProcessLoader initialization (with mock path)
         try (PrintWriter logger = new PrintWriter(System.out)) {
             try {
-                ProcessLoader loader = new ProcessLoader(TEST_EXTRACTION_PATH, logger);
+                ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(TEST_PROCESS_ID);
                 System.out.println("  ⚠️ ProcessLoader initialized but path doesn't exist (expected for test)");
             } catch (Exception e) {
                 System.out.println("  ✓ ProcessLoader correctly handles invalid path: " + e.getClass().getSimpleName());

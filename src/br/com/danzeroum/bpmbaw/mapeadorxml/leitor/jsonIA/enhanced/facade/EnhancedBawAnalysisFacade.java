@@ -1,7 +1,7 @@
 // EnhancedBawAnalysisFacade.java - VERSÃO FINAL COMPLETA
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.model.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.services.*;
@@ -114,7 +114,7 @@ public class EnhancedBawAnalysisFacade {
     private EnhancedAnalysisResult executeStandardAnalysis(AnalysisConfig config) throws Exception {
         try {
             // Carregar processo
-            ProcessLoader loader = new ProcessLoader(config.getExtractionPath(), new PrintWriter(System.out));
+            ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getProcessId());
             loader.loadProcessInMemory(config.getProcessId());
 
             // Gerar relatório padrão
@@ -139,7 +139,7 @@ public class EnhancedBawAnalysisFacade {
     /**
      * Gera relatório padrão
      */
-    private JsonReportV2 generateStandardReport(AnalysisConfig config, ProcessLoader loader) throws Exception {
+    private JsonReportV2 generateStandardReport(AnalysisConfig config, ProcessLoaderV2Plus loader) throws Exception {
         try (StringWriter stringWriter = new StringWriter();
              PrintWriter tempWriter = new PrintWriter(stringWriter)) {
 

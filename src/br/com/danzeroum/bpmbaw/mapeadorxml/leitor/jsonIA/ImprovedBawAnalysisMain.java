@@ -2,11 +2,9 @@ package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.BawAnalysisConfig;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade.EnhancedBawAnalysisFacade;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade.EnhancedBawAnalysisFacadeV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.util.AnalysisLogger;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportGeneratorV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportNavigatorV3;
@@ -173,7 +171,7 @@ public class ImprovedBawAnalysisMain {
         // Initialize core components
         logger.info("MAIN", "Initializing ProcessLoader...");
         logger.startTimer("loader_init");
-        ProcessLoader loader = new ProcessLoader(config.getExtractionPath(),
+        ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getExtractionPath(),
                 new PrintWriter(System.out)); // TODO: Integrate with AnalysisLogger
         logger.stopTimer("loader_init");
 
@@ -810,7 +808,7 @@ public class ImprovedBawAnalysisMain {
     private static class AnalysisResults {
         JsonReportNavigatorV3 navigator;
         JsonReportGeneratorV2 generator;
-        ProcessLoader loader;
+        ProcessLoaderV2Plus loader;
         JsonReportV2 report;
     }
 

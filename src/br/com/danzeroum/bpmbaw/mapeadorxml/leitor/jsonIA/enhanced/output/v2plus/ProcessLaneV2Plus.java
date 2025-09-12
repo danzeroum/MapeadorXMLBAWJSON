@@ -57,6 +57,9 @@ public class ProcessLaneV2Plus {
     @JsonProperty("metadata")
     private LaneMetadata metadata;
 
+
+
+
     // =========================================================================
     // ENUMS
     // =========================================================================
@@ -76,6 +79,7 @@ public class ProcessLaneV2Plus {
 
         private final String code;
         private final String description;
+
 
         LaneType(String code, String description) {
             this.code = code;

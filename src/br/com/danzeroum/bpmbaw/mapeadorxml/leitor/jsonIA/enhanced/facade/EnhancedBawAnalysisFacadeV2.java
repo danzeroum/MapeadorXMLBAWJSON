@@ -1,7 +1,6 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessPrinter;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2.AnalysisIssue.IssueSeverity;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
@@ -10,7 +9,6 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.OutputPort;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.FlowNode;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.SequenceFlow;
-import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.common.PortFlow;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -1563,7 +1561,7 @@ public class EnhancedBawAnalysisFacadeV2 {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
 
-            ProcessLoader loader = new ProcessLoader(config.getExtractionPath(), printWriter);
+            ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getProcessId());
 
             // Carregar processo na memória
             loader.loadProcessInMemory(config.getProcessId());
@@ -2117,7 +2115,7 @@ public class EnhancedBawAnalysisFacadeV2 {
             System.out.println("🔄 Extracting Teamworks data to V2 structures...");
 
             // 1. USAR O PROCESSLOADER PARA CARREGAR RECURSIVAMENTE (COMO A V1)
-            ProcessLoader loader = new ProcessLoader(config.getExtractionPath(),
+            ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getExtractionPath(),
                     new java.io.PrintWriter(System.out));
 
             // 2. CARREGAR O PROCESSO E TODAS AS DEPENDÊNCIAS (IGUAL À V1)

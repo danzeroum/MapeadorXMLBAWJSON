@@ -1,11 +1,11 @@
 // EnhancedAnalysisResult.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.model;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2;
 
 public class EnhancedAnalysisResult {
-    private ProcessLoader loader;
+    private ProcessLoaderV2Plus loader;
     private JsonReportV2 standardReport;
     private BusinessContext businessContext;
     private AIReadinessScore aiReadinessScore;
@@ -13,11 +13,11 @@ public class EnhancedAnalysisResult {
     // Construtores, getters e setters básicos...
     public EnhancedAnalysisResult() {}
 
-    public ProcessLoader getLoader() {
+    public ProcessLoaderV2Plus getLoader() {
         return loader;
     }
 
-    public void setLoader(ProcessLoader loader) {
+    public void setLoader(ProcessLoaderV2Plus loader) {
         this.loader = loader;
     }
 

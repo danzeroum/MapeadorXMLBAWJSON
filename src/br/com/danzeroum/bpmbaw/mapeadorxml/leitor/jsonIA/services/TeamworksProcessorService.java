@@ -1,13 +1,12 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportGeneratorV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Link;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.*;
 
 /**
@@ -15,10 +14,10 @@ import java.util.*;
  */
 public class TeamworksProcessorService {
     private final JsonReportGeneratorV2 generator;
-    private final ProcessLoader loader;
+    private final ProcessLoaderV2Plus loader;
     private final VariableEnricherService variableEnricher;
 
-    public TeamworksProcessorService(JsonReportGeneratorV2 generator, ProcessLoader loader,
+    public TeamworksProcessorService(JsonReportGeneratorV2 generator, ProcessLoaderV2Plus loader,
                                      VariableEnricherService variableEnricher) {
         this.generator = generator;
         this.loader = loader;

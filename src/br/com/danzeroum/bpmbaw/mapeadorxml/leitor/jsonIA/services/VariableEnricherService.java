@@ -1,6 +1,6 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportGeneratorV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks;
@@ -55,9 +55,9 @@ public class VariableEnricherService {
     private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\b([A-Za-z_][A-Za-z0-9_]*)\\b");
 
     private final JsonReportGeneratorV2 reportGenerator;
-    private final ProcessLoader processLoader;
+    private final ProcessLoaderV2Plus processLoader;
 
-    public VariableEnricherService(JsonReportGeneratorV2 reportGenerator, ProcessLoader processLoader) {
+    public VariableEnricherService(JsonReportGeneratorV2 reportGenerator, ProcessLoaderV2Plus processLoader) {
         this.reportGenerator = reportGenerator;
         this.processLoader = processLoader;
     }
@@ -156,7 +156,7 @@ public class VariableEnricherService {
 
         try {
             // Tentar getFromCache
-            Object artifact = processLoader.getFromCache(id);
+            Object artifact = processLoader.getArtefatoDoCache(id);
             if (artifact != null) return artifact;
 
             // Tentar getArtefatoDoCache

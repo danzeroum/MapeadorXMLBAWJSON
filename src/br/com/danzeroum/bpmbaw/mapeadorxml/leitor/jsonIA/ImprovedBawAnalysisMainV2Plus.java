@@ -57,7 +57,7 @@ public class ImprovedBawAnalysisMainV2Plus {
 
             builder.outputDirectory(DEFAULT_OUTPUT_PATH)
                     .outputFileName(DEFAULT_OUTPUT_FILE)
-                    .rootViewDepth(2)
+                    .rootViewDepth(10)
                     .maxExecutionPaths(50)
                     // CORREÇÃO: Usar método correto setEnableDetailedLogging
                     .enableDetailedLogging(true);

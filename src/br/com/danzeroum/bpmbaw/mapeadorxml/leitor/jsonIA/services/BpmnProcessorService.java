@@ -1,6 +1,6 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportGeneratorV2;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2;
@@ -23,10 +23,10 @@ import java.util.*;
  */
 public class BpmnProcessorService {
     private final JsonReportGeneratorV2 generator;
-    private final ProcessLoader loader;
+    private final ProcessLoaderV2Plus loader;
     private final VariableEnricherService variableEnricher;
 
-    public BpmnProcessorService(JsonReportGeneratorV2 generator, ProcessLoader loader,
+    public BpmnProcessorService(JsonReportGeneratorV2 generator, ProcessLoaderV2Plus loader,
                                 VariableEnricherService variableEnricher) {
         this.generator = generator;
         this.loader = loader;
@@ -96,7 +96,7 @@ public class BpmnProcessorService {
 
     private String resolveParticipantName(String participantId) {
         try {
-            ProcessLoader.ArtifactLocation loc = loader.findArtifactLocation(participantId);
+            ProcessLoaderV2Plus.ArtifactLocation loc = loader.findArtifactLocation(participantId);
             if (loc != null && loc.objectInfo != null && loc.objectInfo.getName() != null) {
                 return loc.objectInfo.getName();
             }

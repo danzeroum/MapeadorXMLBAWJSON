@@ -19,7 +19,6 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.ProcessVariable;
 
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * (VERSÃO FINAL)
@@ -66,7 +65,7 @@ public class ProcessPrinter {
      * @param location O objeto ArtifactLocation que contém os detalhes do artefato.
      * @return true se o cabeçalho foi impresso, false se o artefato já foi impresso antes.
      */
-    public boolean printHeaderDoArtefato(ProcessLoader.ArtifactLocation location) {
+    public boolean printHeaderDoArtefato(ProcessLoaderV2Plus.ArtifactLocation location) {
         if (location == null || location.objectInfo == null || !artefatosJaImpressos.add(location.objectInfo.getId())) {
             return false;
         }
@@ -265,7 +264,7 @@ public class ProcessPrinter {
      * @param location O objeto ArtifactLocation do subprocesso referenciado.
      * @param indent String de indentação.
      */
-    public void printReferenceToPrintedArtifact(ProcessLoader.ArtifactLocation location, String indent) {
+    public void printReferenceToPrintedArtifact(ProcessLoaderV2Plus.ArtifactLocation location, String indent) {
         if (location == null || location.objectInfo == null) return;
         String icon = getIconForType(location.objectInfo.getType());
         String ancora = gerarAncora(location.objectInfo.getName());
