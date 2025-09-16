@@ -1,3 +1,4 @@
+// Local: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIA/enhanced/extractors/BpmnProcessExtractor.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
@@ -42,6 +43,13 @@ public class BpmnProcessExtractor {
         System.out.println("  -> Extraindo condições dos gateways...");
         processDefinition.setConditions(BpmnToV2PlusConditionsExtractor.extractConditions(process));
         System.out.println("     ... " + processDefinition.getConditions().size() + " condições encontradas.");
+
+        // --- INÍCIO DA MELHORIA ---
+        // 5. Extrai os Mapeamentos das Atividades
+        System.out.println("  -> Extraindo mapeamentos de dados...");
+        processDefinition.setMappings(BpmnToV2PlusMappingsExtractor.extractMappings(process));
+        System.out.println("     ... " + (processDefinition.getMappings().getInputMappings().size() + processDefinition.getMappings().getOutputMappings().size()) + " mapeamentos encontrados.");
+        // --- FIM DA MELHORIA ---
 
         System.out.println("BPMN Extractor: Extração final para o processo '" + process.getName() + "' finalizada com sucesso.");
 

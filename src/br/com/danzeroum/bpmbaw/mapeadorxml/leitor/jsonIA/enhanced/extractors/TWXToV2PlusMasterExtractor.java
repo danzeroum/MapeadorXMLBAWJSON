@@ -85,7 +85,7 @@ public class TWXToV2PlusMasterExtractor {
     // MÉTODOS DE CRIAÇÃO E FALLBACK (Mantidos para robustez)
     // =========================================================================
 
-    private static ProcessDefinitionV2Plus createMinimalDefinition() {
+    public static ProcessDefinitionV2Plus createMinimalDefinition() {
         ProcessDefinitionV2Plus definition = ProcessDefinitionV2Plus.create("minimal-process");
         definition.setName("Minimal Process");
         definition.setDescription("Minimal process created due to an extraction error or null input.");

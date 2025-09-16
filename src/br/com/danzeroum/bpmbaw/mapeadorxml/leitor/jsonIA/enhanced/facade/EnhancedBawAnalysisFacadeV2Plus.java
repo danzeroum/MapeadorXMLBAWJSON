@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusMasterExtractor.createMinimalDefinition;
+
 public class EnhancedBawAnalysisFacadeV2Plus {
 
     private static final String VERSION = "2.9.0-final-extraction";
@@ -33,20 +35,33 @@ public class EnhancedBawAnalysisFacadeV2Plus {
 
         // ETAPA 1: Carregar todos os artefatos em memória
         ProcessLoaderV2Plus loader = loadTWXDataCompletelyFixed(config);
-        Bpd bpd = getBpdFromLoader(loader, config.getProcessId());
+        // A busca pelo artefato principal foi movida para dentro do método de extração para mais flexibilidade
+        Object mainArtifact = loader.getArtefatoDoCache(config.getProcessId());
 
-        // ETAPA 2: Passar o loader e o BPD para os extratores
-        ProcessDefinitionV2Plus processDefinition = extractWithV2PlusExtractorsCompletelyFixed(bpd, loader, config);
+        if (mainArtifact == null) {
+            throw new Exception("Artifact principal com ID '" + config.getProcessId() + "' não foi encontrado no cache.");
+        }
+
+        // ETAPA 2: Passar o loader e o artefato principal para os extratores
+        ProcessDefinitionV2Plus processDefinition = extractWithV2PlusExtractorsCompletelyFixed(mainArtifact, loader, config);
+
+        // *** NOVA ETAPA DE EXTRAÇÃO DE UI ***
+        System.out.println("🎨 Extracting UI components...");
+        TWXToV2PlusUIExtractor uiExtractor = new TWXToV2PlusUIExtractor(loader);
+        ProcessUIV2Plus ui = uiExtractor.extractUI(mainArtifact);
+        // *** FIM DA NOVA ETAPA ***
 
         // ETAPA 3: Montar o relatório final
         EnhancedStructuredProcessReportV2 report = createCompleteReportV2PlusCompletelyFixed(processDefinition, config, loader);
+
+        // Adiciona a UI extraída ao relatório
+        report.setUi(ui);
 
         validateAndEnrichReportFixed(report);
         printDetailedExtractionStatistics(report);
 
         return report;
     }
-
     private static ProcessLoaderV2Plus loadTWXDataCompletelyFixed(AnalysisConfig config) {
         System.out.println("📂 Loading TWX data...");
         try {
@@ -88,48 +103,39 @@ public class EnhancedBawAnalysisFacadeV2Plus {
         return createMinimalBpdForAnalysis(processId);
     }
 
-    private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(Bpd bpd, ProcessLoaderV2Plus loader, AnalysisConfig config) {
+    private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
         System.out.println("🔧 Iniciando extração com orquestrador V2Plus...");
 
-        if (bpd == null) {
-            System.err.println("⚠️ Bpd object is null. Returning an empty process definition.");
-            return new ProcessDefinitionV2Plus();
-        }
-
-        String bpmn2XmlData = bpd.getBpmn2Data();
-        if (bpmn2XmlData != null && !bpmn2XmlData.trim().isEmpty()) {
+        if (mainArtifact instanceof Definitions) {
             System.out.println("Moderno (BPMN 2.0) detectado. Usando extratores especializados...");
-            try {
-                JAXBContext context = JAXBContext.newInstance(Definitions.class);
-                Unmarshaller unmarshaller = context.createUnmarshaller();
-                StringReader reader = new StringReader(bpmn2XmlData);
-                Definitions definitions = (Definitions) unmarshaller.unmarshal(reader);
-                return BpmnProcessExtractor.extractProcessDefinition(definitions, loader);
-            } catch (Exception e) {
-                System.err.println("❌ Erro Crítico ao processar bpmn2Data. Nenhum dado pôde ser extraído.");
-                e.printStackTrace();
-                return new ProcessDefinitionV2Plus();
+            return BpmnProcessExtractor.extractProcessDefinition((Definitions) mainArtifact, loader);
+        } else if (mainArtifact instanceof Teamworks) {
+            Teamworks tw = (Teamworks) mainArtifact;
+            if (tw.getBpd() != null) {
+                Bpd bpd = tw.getBpd();
+                // Verifica se o BPD legado contém dados BPMN 2.0 modernos
+                if (bpd.getBpmn2Data() != null && !bpd.getBpmn2Data().trim().isEmpty()) {
+                    System.out.println("Híbrido (BPD com bpmn2Data) detectado. Usando extratores BPMN 2.0...");
+                    try {
+                        JAXBContext context = JAXBContext.newInstance(Definitions.class);
+                        Unmarshaller unmarshaller = context.createUnmarshaller();
+                        StringReader reader = new StringReader(bpd.getBpmn2Data());
+                        Definitions definitions = (Definitions) unmarshaller.unmarshal(reader);
+                        return BpmnProcessExtractor.extractProcessDefinition(definitions, loader);
+                    } catch (Exception e) {
+                        System.err.println("❌ Erro Crítico ao processar bpmn2Data. Nenhum dado pôde ser extraído.");
+                        e.printStackTrace();
+                        return new ProcessDefinitionV2Plus();
+                    }
+                } else {
+                    System.out.println("Processo Legado (BPD) detectado. Usando extratores TWX...");
+                    return TWXToV2PlusMasterExtractor.extractComplete(bpd, loader);
+                }
             }
-        } else {
-            System.out.println("Processo Legado (BPD) detectado. Usando extratores TWX existentes...");
-            BusinessProcessDiagram diagram = bpd.getBusinessProcessDiagram();
-            if (diagram == null) {
-                System.err.println("⚠️ BPD não contém um BusinessProcessDiagram. Extração legada abortada.");
-                return new ProcessDefinitionV2Plus();
-            }
-
-            ProcessDefinitionV2Plus definition = ProcessDefinitionV2Plus.create(diagram.getId());
-            TWXToV2PlusVariablesExtractor varExtractor = new TWXToV2PlusVariablesExtractor(loader);
-            definition.setVariables(varExtractor.extractVariables(bpd));
-            definition.setGraph(GraphExtractorV2Plus.extractGraph(diagram));
-            TWXToV2PlusLogicExtractor logicExtractor = new TWXToV2PlusLogicExtractor(loader);
-            List<FlowObject> allFlowObjects = GraphExtractorV2Plus.extractAllFlowObjects(diagram);
-            definition.setLogic(logicExtractor.extractLogic(allFlowObjects));
-            TWXToV2PlusConditionsExtractor conditionsExtractor = new TWXToV2PlusConditionsExtractor();
-            definition.setConditions(conditionsExtractor.extractConditions(diagram.getFlows()));
-            definition.setMappings(TWXToV2PlusMappingsExtractor.extractMappings(diagram));
-            return definition;
         }
+
+        System.err.println("⚠️ Tipo de artefato não suportado para extração: " + mainArtifact.getClass().getName());
+        return createMinimalDefinition();
     }
 
     private static Bpd createBpdFromDefinitions(Definitions definitions) {

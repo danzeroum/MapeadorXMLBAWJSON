@@ -79,11 +79,15 @@ public class ProcessUIV2Plus {
         private String description;
         private Map<String, Object> properties;
         private List<String> events;
+        @JsonProperty("children") // Garante que será serializado no JSON
+        private List<String> children; // Lista de IDs dos componentes filhos
 
         public UIComponentV2Plus() {
             this.properties = new HashMap<String, Object>();
             this.events = new ArrayList<String>();
+            this.children = new ArrayList<String>(); // Inicializa a lista
         }
+
 
         // Getters and Setters
         public String getId() { return id; }
@@ -107,6 +111,12 @@ public class ProcessUIV2Plus {
         public void setEvents(List<String> events) {
             this.events = events != null ? events : new ArrayList<String>();
         }
+
+        public List<String> getChildren() { return children; }
+        public void setChildren(List<String> children) {
+            this.children = children != null ? children : new ArrayList<String>();
+        }
+
     }
 
     /**
@@ -184,4 +194,6 @@ public class ProcessUIV2Plus {
     public String toString() {
         return String.format("ProcessUIV2Plus{id='%s', components=%d}", id, components.size());
     }
+
+
 }

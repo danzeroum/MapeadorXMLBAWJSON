@@ -68,7 +68,7 @@ public class ProcessLoaderV2Plus {
 
         // Carrega artefatos do projeto principal
         if (mainManifest != null && mainManifest.getObjects() != null) {
-            System.out.println("  -> Carregando " + mainManifest.getObjects().size() + " artefatos do projeto principal.");
+           // System.out.println("  -> Carregando " + mainManifest.getObjects().size() + " artefatos do projeto principal.");
             for (PackageObject obj : mainManifest.getObjects()) {
                 loadArtifact(obj.getId());
             }

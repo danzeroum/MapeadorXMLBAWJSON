@@ -1,3 +1,4 @@
+// Local: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIA/enhanced/extractors/BpmnToV2PlusGraphExtractor.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessEdgeV2Plus;
@@ -17,12 +18,23 @@ public class BpmnToV2PlusGraphExtractor {
             for (Object element : process.getFlowElements()) {
                 if (element instanceof FlowNode) {
                     FlowNode fn = (FlowNode) element;
+                    ProcessNodeV2Plus.NodeType nodeType = ProcessNodeV2Plus.NodeType.fromString(fn.getClass().getSimpleName());
+
                     ProcessNodeV2Plus node = new ProcessNodeV2Plus(
                             fn.getId(),
-                            ProcessNodeV2Plus.NodeType.fromString(fn.getClass().getSimpleName()),
+                            nodeType,
                             fn.getName(),
                             null // A lane será atribuída depois
                     );
+
+                    // --- INÍCIO DA MELHORIA ---
+                    // Se o nó for uma tarefa de script, cria a referência para a lógica
+                    if (nodeType == ProcessNodeV2Plus.NodeType.SCRIPT_TASK) {
+                        // O ID da lógica segue o padrão "lg:{id_do_no}"
+                        node.setLogicRef("lg:" + fn.getId());
+                    }
+                    // --- FIM DA MELHORIA ---
+
                     graph.addNode(node);
                 }
             }

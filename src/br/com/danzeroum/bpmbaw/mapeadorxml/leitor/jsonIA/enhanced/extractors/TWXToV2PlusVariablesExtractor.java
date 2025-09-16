@@ -68,14 +68,12 @@ public class TWXToV2PlusVariablesExtractor {
         return variables;
     }
 
-    /**
-     * Ponto de entrada para extrair todas as definições de tipo de dados.
-     */
     public List<DataTypeDefinitionV2Plus> extractDataTypeDefinitions(ProcessVariablesV2Plus variables) {
         List<DataTypeDefinitionV2Plus> dataTypes = new ArrayList<>();
-        processedDataTypeIds.clear();
+        processedDataTypeIds.clear(); // Limpa o controle para uma nova execução
         addPrimitiveDataTypes(dataTypes); // Garante que os tipos básicos sempre existam
 
+        // Itera sobre todas as variáveis (entrada, saída e privadas) e processa seus tipos
         variables.getInput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
         variables.getOutput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
         variables.getPrivateVars().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
@@ -83,21 +81,21 @@ public class TWXToV2PlusVariablesExtractor {
         return dataTypes;
     }
 
-    /**
-     * Processa um tipo de variável de forma recursiva, com proteções.
-     */
-    private void processVariableType(String typeRef, List<DataTypeDefinitionV2Plus> dataTypes) {
-        if (typeRef == null || processedDataTypeIds.contains(typeRef)) {
-            return; // Já processado ou inválido
-        }
 
-        // CRÍTICO: Detecção de ciclo, como sugerido
-        if (currentlyProcessing.contains(typeRef)) {
-            System.err.println("⚠️ Cycle detected for typeRef: " + typeRef + ". Skipping recursive processing.");
+    private void processVariableType(String typeRef, List<DataTypeDefinitionV2Plus> dataTypes) {
+        System.out.println("[DEBUG-VARS] A processar TypeRef: " + typeRef); // LOG 1
+        if (typeRef == null || processedDataTypeIds.contains(typeRef)) {
+            if(typeRef != null) System.out.println("[DEBUG-VARS] -> Já processado ou nulo. A saltar."); // LOG 2
             return;
         }
 
-        // Otimização: Usa o cache se o tipo já foi gerado
+        // Proteção contra recursão infinita (ciclos)
+        if (currentlyProcessing.contains(typeRef)) {
+            System.err.println("⚠️ Ciclo detectado para o tipo: " + typeRef + ". Pulando processamento recursivo.");
+            return;
+        }
+
+        // Otimização de performance com cache
         if (dataTypeCache.containsKey(typeRef)) {
             if (!processedDataTypeIds.contains(typeRef)) {
                 dataTypes.add(dataTypeCache.get(typeRef));
@@ -108,8 +106,16 @@ public class TWXToV2PlusVariablesExtractor {
 
         currentlyProcessing.add(typeRef);
         try {
-            String classId = typeRef.replace("dt:", "").replaceAll("@\\d+$", "");
+            String classIdWithPrefix  = typeRef.replace("dt:", "").replaceAll("@\\d+$", "");
+            String classId = classIdWithPrefix.startsWith("itm.") ? classIdWithPrefix.substring(4) : classIdWithPrefix;
+            System.out.println("[DEBUG-VARS] -> ID do Artefacto a procurar no cache: " + classId); // LOG 3
             Object artifact = loader.getArtefatoDoCache(classId);
+
+            if (artifact != null) {
+                System.out.println("[DEBUG-VARS] -> Artefacto encontrado no cache! Tipo: " + artifact.getClass().getName()); // LOG 4
+            } else {
+                System.out.println("[DEBUG-VARS] -> AVISO: Artefacto NÃO encontrado no cache para o ID: " + classId); // LOG 5
+            }
 
             if (artifact instanceof Teamworks && ((Teamworks) artifact).getTwClass() != null) {
                 TwClass twClass = ((Teamworks) artifact).getTwClass();
@@ -118,77 +124,64 @@ public class TWXToV2PlusVariablesExtractor {
                 dataType.setId(typeRef);
                 dataType.setName(twClass.getName());
                 dataType.setDescription(twClass.getDescription());
-                dataType.setJsonSchema(createJsonSchemaFromTwClass(twClass));
+                dataType.setJsonSchema(createJsonSchemaFromTwClass(twClass, dataTypes)); // Passa a lista para recursão
 
                 dataTypes.add(dataType);
                 processedDataTypeIds.add(typeRef);
                 dataTypeCache.put(typeRef, dataType); // Adiciona ao cache
-
-                // Processa recursivamente os tipos das propriedades internas
-                if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
-                    for (Property prop : twClass.getDefinition().getProperties()) {
-                        processVariableType(ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(prop.getClassRef()), dataTypes);
-                    }
-                }
             }
         } finally {
-            currentlyProcessing.remove(typeRef); // Garante a limpeza para futuras chamadas
+            currentlyProcessing.remove(typeRef); // Libera o tipo do controle de ciclo
         }
     }
 
-    /**
-     * Cria a estrutura JSON Schema a partir de um TwClass, com validação.
-     */
-    private Map<String, Object> createJsonSchemaFromTwClass(TwClass twClass) {
-        if (twClass == null) return createEmptySchema("Null TwClass object provided.");
+    private Map<String, Object> createJsonSchemaFromTwClass(TwClass twClass, List<DataTypeDefinitionV2Plus> dataTypes) {
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+        schema.put("type", "object");
+        schema.put("title", twClass.getName());
+        schema.put("description", twClass.getDescription());
 
-        try {
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
-            schema.put("type", "object");
-            schema.put("title", twClass.getName());
-            schema.put("description", twClass.getDescription());
+        Map<String, Object> properties = new HashMap<>();
+        List<String> required = new ArrayList<>();
 
-            Map<String, Object> properties = new HashMap<>();
-            List<String> required = new ArrayList<>();
-
-            if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
-                for (Property prop : twClass.getDefinition().getProperties()) {
-                    if(prop.getName() != null) { // Validação de propriedade malformada
-                        properties.put(prop.getName(), createPropertySchema(prop));
-                        if (prop.isPropertyRequired()) {
-                            required.add(prop.getName());
-                        }
+        if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
+            for (Property prop : twClass.getDefinition().getProperties()) {
+                if(prop.getName() != null) {
+                    properties.put(prop.getName(), createPropertySchema(prop, dataTypes));
+                    if (prop.isPropertyRequired()) {
+                        required.add(prop.getName());
                     }
                 }
             }
-            schema.put("properties", properties);
-            if (!required.isEmpty()) {
-                schema.put("required", required);
-            }
-            return schema;
-        } catch (Exception e) {
-            System.err.println("Error creating JSON schema for " + twClass.getName() + ": " + e.getMessage());
-            return createFallbackSchema(twClass.getName());
         }
+        schema.put("properties", properties);
+        if (!required.isEmpty()) {
+            schema.put("required", required);
+        }
+        return schema;
     }
 
-    private Map<String, Object> createPropertySchema(Property prop) {
+    private Map<String, Object> createPropertySchema(Property prop, List<DataTypeDefinitionV2Plus> dataTypes) {
         Map<String, Object> propSchema = new HashMap<>();
-        String typeRef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(prop.getClassRef());
+        String propertyTypeRef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(prop.getClassRef());
+
+        // Processa o tipo da propriedade de forma recursiva para garantir que ele seja definido
+        processVariableType(propertyTypeRef, dataTypes);
 
         if (prop.isArrayProperty()) {
             propSchema.put("type", "array");
             Map<String, String> items = new HashMap<>();
-            // A referência aponta para a definição de tipo que será criada
-            items.put("$ref", "#/definitions/" + typeRef);
+            items.put("$ref", "#/definitions/" + propertyTypeRef); // Referência ao tipo aninhado
             propSchema.put("items", items);
         } else {
-            propSchema.put("$ref", "#/definitions/" + typeRef);
+            propSchema.put("$ref", "#/definitions/" + propertyTypeRef);
         }
         propSchema.put("description", prop.getDescription());
         return propSchema;
     }
+
+
 
     private Map<String, Object> createEmptySchema(String reason) {
         Map<String, Object> schema = new HashMap<>();
@@ -205,61 +198,31 @@ public class TWXToV2PlusVariablesExtractor {
      * COMPLETO: Adiciona as definições de todos os tipos primitivos padrão do BAW.
      */
     private void addPrimitiveDataTypes(List<DataTypeDefinitionV2Plus> dataTypes) {
-        // String
-        if (processedDataTypeIds.add("dt:String@1")) {
-            DataTypeDefinitionV2Plus stringType = new DataTypeDefinitionV2Plus("dt:String@1", "String", "Primitive string type.");
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("type", "string");
-            stringType.setJsonSchema(schema);
-            dataTypes.add(stringType);
-            dataTypeCache.put("dt:String@1", stringType);
-        }
-        // Integer
-        if (processedDataTypeIds.add("dt:Integer@1")) {
-            DataTypeDefinitionV2Plus intType = new DataTypeDefinitionV2Plus("dt:Integer@1", "Integer", "Primitive integer type.");
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("type", "integer");
-            intType.setJsonSchema(schema);
-            dataTypes.add(intType);
-            dataTypeCache.put("dt:Integer@1", intType);
-        }
-        // Boolean
-        if (processedDataTypeIds.add("dt:Boolean@1")) {
-            DataTypeDefinitionV2Plus boolType = new DataTypeDefinitionV2Plus("dt:Boolean@1", "Boolean", "Primitive boolean type.");
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("type", "boolean");
-            boolType.setJsonSchema(schema);
-            dataTypes.add(boolType);
-            dataTypeCache.put("dt:Boolean@1", boolType);
-        }
-        // Decimal
-        if (processedDataTypeIds.add("dt:Decimal@1")) {
-            DataTypeDefinitionV2Plus decimalType = new DataTypeDefinitionV2Plus("dt:Decimal@1", "Decimal", "Primitive decimal type.");
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("type", "number");
-            decimalType.setJsonSchema(schema);
-            dataTypes.add(decimalType);
-            dataTypeCache.put("dt:Decimal@1", decimalType);
-        }
-        // Date
-        if (processedDataTypeIds.add("dt:Date@1")) {
-            DataTypeDefinitionV2Plus dateType = new DataTypeDefinitionV2Plus("dt:Date@1", "Date", "Primitive date type.");
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("type", "string");
-            schema.put("format", "date-time");
-            dateType.setJsonSchema(schema);
-            dataTypes.add(dateType);
-            dataTypeCache.put("dt:Date@1", dateType);
-        }
-        // ANY (Object)
-        if (processedDataTypeIds.add("dt:ANY@1")) {
-            DataTypeDefinitionV2Plus anyType = new DataTypeDefinitionV2Plus("dt:ANY@1", "ANY", "Generic object type (ANY).");
-            Map<String, Object> schema = new HashMap<>();
-            schema.put("type", "object");
-            schema.put("description", "Can be any type of object.");
-            anyType.setJsonSchema(schema);
-            dataTypes.add(anyType);
-            dataTypeCache.put("dt:ANY@1", anyType);
+        // Lista de tipos primitivos para adicionar
+        String[] primitives = {"String", "Integer", "Boolean", "Decimal", "Date", "ANY"};
+
+        for (String primitive : primitives) {
+            String typeRef = "dt:" + primitive + "@1";
+            if (processedDataTypeIds.add(typeRef)) {
+                DataTypeDefinitionV2Plus primitiveType = new DataTypeDefinitionV2Plus(typeRef, primitive, "Primitive " + primitive.toLowerCase() + " type.");
+                Map<String, Object> schema = new HashMap<>();
+
+                switch(primitive) {
+                    case "Integer": schema.put("type", "integer"); break;
+                    case "Boolean": schema.put("type", "boolean"); break;
+                    case "Decimal": schema.put("type", "number"); break;
+                    case "Date":
+                        schema.put("type", "string");
+                        schema.put("format", "date-time");
+                        break;
+                    case "ANY": schema.put("type", "object"); break;
+                    default: schema.put("type", "string"); break;
+                }
+
+                primitiveType.setJsonSchema(schema);
+                dataTypes.add(primitiveType);
+                dataTypeCache.put(typeRef, primitiveType);
+            }
         }
     }
 }
