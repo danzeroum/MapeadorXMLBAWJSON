@@ -14,6 +14,7 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade.EnhancedBawAnalysisFacadeV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.*;
+import br.com.danzeroum.bpmbaw.mapeadorxml.util.FormatadorDeDataUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -30,12 +31,22 @@ import java.util.List;
 public class ImprovedBawAnalysisMainV2Plus {
 
     private static final String VERSION                 = "2.5.0-completely-fixed-java8";
+/*
     private static final String DEFAULT_PROJECT_NAME    = "Gestao_de_Recondicionamentos_Caetano_Retail";
     private static final String DEFAULT_PROCESS_ID      = "25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187";
     private static final String DEFAULT_ACTIVITY_NAME   = "Recondicionamentos - Novo pedido";
     private static final String DEFAULT_EXTRACTION_PATH = "C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail";;
     private static final String DEFAULT_OUTPUT_PATH     = "output";
     private static final String DEFAULT_OUTPUT_FILE     = "enhanced_v2plus_report.json";
+*/
+    private static final String DEFAULT_PROJECT_NAME    = "Processo Pedido Recondicionament";
+    private static final String DEFAULT_PROCESS_ID      = "25.acb58aeb-77bd-432b-93c4-e9dd1cb80991";
+    private static final String DEFAULT_ACTIVITY_NAME   = "Processo Pedido Recondicionament";
+    private static final String DEFAULT_EXTRACTION_PATH = "C:\\CodigoJava\\Projetos\\Click2Check412";;
+    private static final String DEFAULT_OUTPUT_PATH     = "output";
+    private static final String DEFAULT_OUTPUT_FILE     = "enhanced_v2plus_reportC2C.json";
+
+
     /**
      * MÉTODO PRINCIPAL COMPLETAMENTE CORRIGIDO
      */
@@ -49,6 +60,8 @@ public class ImprovedBawAnalysisMainV2Plus {
             // 1. Criar configuração validada e robusta
            // AnalysisConfig config = createRobustConfiguration();
 
+            FormatadorDeDataUtil formatador = new FormatadorDeDataUtil();
+
             AnalysisConfig.AnalysisConfigBuilder builder = AnalysisConfig.builder()
                     .projectName(DEFAULT_PROJECT_NAME)
                     .processId(DEFAULT_PROCESS_ID)
@@ -56,7 +69,7 @@ public class ImprovedBawAnalysisMainV2Plus {
                     .extractionPath(DEFAULT_EXTRACTION_PATH);
 
             builder.outputDirectory(DEFAULT_OUTPUT_PATH)
-                    .outputFileName(DEFAULT_OUTPUT_FILE)
+                    .outputFileName(formatador.getTimestampAtualFormatado()+"_"+ DEFAULT_OUTPUT_FILE)
                     .rootViewDepth(10)
                     .maxExecutionPaths(50)
                     // CORREÇÃO: Usar método correto setEnableDetailedLogging
