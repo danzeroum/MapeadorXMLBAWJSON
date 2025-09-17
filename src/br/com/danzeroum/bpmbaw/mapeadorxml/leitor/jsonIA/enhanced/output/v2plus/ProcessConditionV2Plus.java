@@ -49,13 +49,13 @@ public class ProcessConditionV2Plus {
      * SUBSTITUI: JavaScript imperativo
      * EXEMPLO: "viatura.tipo == 'LIGEIRO' && recondicionamento.valor > 1000"
      */
-    @JsonProperty("expression")
+    @JsonProperty("expr")
     private String expression;
 
     /**
      * Linguagem da expressão (CEL, JMESPath, etc.)
      */
-    @JsonProperty("language")
+    @JsonProperty("exprLang")
     private ExpressionLanguage language;
 
     /**

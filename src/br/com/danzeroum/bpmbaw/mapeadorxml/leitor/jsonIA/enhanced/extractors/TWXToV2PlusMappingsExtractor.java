@@ -71,15 +71,15 @@ public class TWXToV2PlusMappingsExtractor {
             mappings.setExprLang(detectExpressionLanguage(mappings));
 
             System.out.println("✅ Mappings extraction completed");
-            System.out.println("   Input mappings: " + mappings.getInputMappings().size());
-            System.out.println("   Output mappings: " + mappings.getOutputMappings().size());
+            System.out.println("   Input mappings: " + mappings.getInputs().size());
+            System.out.println("   Output mappings: " + mappings.getOutputs().size());
 
         } catch (Exception e) {
             System.err.println("⚠️ Error extracting mappings: " + e.getMessage());
             e.printStackTrace();
 
             // Fallback para mappings padrão
-            if (mappings.getInputMappings().isEmpty() && mappings.getOutputMappings().isEmpty()) {
+            if (mappings.getInputs().isEmpty() && mappings.getOutputs().isEmpty()) {
                 return createDefaultMappings();
             }
         }
@@ -459,7 +459,7 @@ public class TWXToV2PlusMappingsExtractor {
         if (fieldName == null) return false;
 
         // Verificar input mappings
-        for (InputMappingV2Plus inputMapping : mappings.getInputMappings()) {
+        for (InputMappingV2Plus inputMapping : mappings.getInputs()) {
             if (fieldName.equals(inputMapping.getSourceField()) ||
                     fieldName.equals(inputMapping.getTargetField())) {
                 return true;
@@ -467,7 +467,7 @@ public class TWXToV2PlusMappingsExtractor {
         }
 
         // Verificar output mappings
-        for (OutputMappingV2Plus outputMapping : mappings.getOutputMappings()) {
+        for (OutputMappingV2Plus outputMapping : mappings.getOutputs()) {
             if (fieldName.equals(outputMapping.getSourceField()) ||
                     fieldName.equals(outputMapping.getTargetField())) {
                 return true;
@@ -497,7 +497,7 @@ public class TWXToV2PlusMappingsExtractor {
         int twxCount = 0;
 
         // Analisar input mappings
-        for (InputMappingV2Plus inputMapping : mappings.getInputMappings()) {
+        for (InputMappingV2Plus inputMapping : mappings.getInputs()) {
             String source = inputMapping.getSourceField();
             String target = inputMapping.getTargetField();
 
@@ -511,7 +511,7 @@ public class TWXToV2PlusMappingsExtractor {
         }
 
         // Analisar output mappings
-        for (OutputMappingV2Plus outputMapping : mappings.getOutputMappings()) {
+        for (OutputMappingV2Plus outputMapping : mappings.getOutputs()) {
             String source = outputMapping.getSourceField();
             String target = outputMapping.getTargetField();
 
@@ -680,7 +680,7 @@ public class TWXToV2PlusMappingsExtractor {
      */
     private static void validateAndEnrichMappings(ProcessMappingsV2Plus mappings) {
         // Validar input mappings
-        Iterator<InputMappingV2Plus> inputIterator = mappings.getInputMappings().iterator();
+        Iterator<InputMappingV2Plus> inputIterator = mappings.getInputs().iterator();
         while (inputIterator.hasNext()) {
             InputMappingV2Plus inputMapping = inputIterator.next();
 
@@ -698,7 +698,7 @@ public class TWXToV2PlusMappingsExtractor {
         }
 
         // Validar output mappings
-        Iterator<OutputMappingV2Plus> outputIterator = mappings.getOutputMappings().iterator();
+        Iterator<OutputMappingV2Plus> outputIterator = mappings.getOutputs().iterator();
         while (outputIterator.hasNext()) {
             OutputMappingV2Plus outputMapping = outputIterator.next();
 
@@ -774,8 +774,8 @@ public class TWXToV2PlusMappingsExtractor {
         // Configurar linguagem padrão
         mappings.setExprLang("twx");
 
-        System.out.println("   ✅ Created " + mappings.getInputMappings().size() + " default input mappings");
-        System.out.println("   ✅ Created " + mappings.getOutputMappings().size() + " default output mappings");
+        System.out.println("   ✅ Created " + mappings.getInputs().size() + " default input mappings");
+        System.out.println("   ✅ Created " + mappings.getOutputs().size() + " default output mappings");
 
         return mappings;
     }
@@ -832,8 +832,8 @@ public class TWXToV2PlusMappingsExtractor {
         // Configurar linguagem
         mappings.setExprLang("twx");
 
-        System.out.println("   ✅ Created " + mappings.getInputMappings().size() + " Caetano Retail input mappings");
-        System.out.println("   ✅ Created " + mappings.getOutputMappings().size() + " Caetano Retail output mappings");
+        System.out.println("   ✅ Created " + mappings.getInputs().size() + " Caetano Retail input mappings");
+        System.out.println("   ✅ Created " + mappings.getOutputs().size() + " Caetano Retail output mappings");
 
         return mappings;
     }
@@ -845,16 +845,16 @@ public class TWXToV2PlusMappingsExtractor {
         System.out.println("\n🔍 MAPPINGS DEBUG INFORMATION:");
         System.out.println("===============================================");
 
-        System.out.println("📥 INPUT MAPPINGS (" + mappings.getInputMappings().size() + "):");
-        for (int i = 0; i < mappings.getInputMappings().size(); i++) {
-            InputMappingV2Plus inputMapping = mappings.getInputMappings().get(i);
+        System.out.println("📥 INPUT MAPPINGS (" + mappings.getInputs().size() + "):");
+        for (int i = 0; i < mappings.getInputs().size(); i++) {
+            InputMappingV2Plus inputMapping = mappings.getInputs().get(i);
             System.out.println("   " + (i + 1) + ". " + inputMapping.getSourceField() + " → " + inputMapping.getTargetField());
             System.out.println("      Description: " + inputMapping.getDescription());
         }
 
-        System.out.println("\n📤 OUTPUT MAPPINGS (" + mappings.getOutputMappings().size() + "):");
-        for (int i = 0; i < mappings.getOutputMappings().size(); i++) {
-            OutputMappingV2Plus outputMapping = mappings.getOutputMappings().get(i);
+        System.out.println("\n📤 OUTPUT MAPPINGS (" + mappings.getOutputs().size() + "):");
+        for (int i = 0; i < mappings.getOutputs().size(); i++) {
+            OutputMappingV2Plus outputMapping = mappings.getOutputs().get(i);
             System.out.println("   " + (i + 1) + ". " + outputMapping.getSourceField() + " → " + outputMapping.getTargetField());
             System.out.println("      Alias: " + outputMapping.getAlias());
             System.out.println("      Description: " + outputMapping.getDescription());
@@ -878,12 +878,12 @@ public class TWXToV2PlusMappingsExtractor {
         boolean isValid = true;
 
         // Validar input mappings
-        if (mappings.getInputMappings() == null) {
+        if (mappings.getInputs() == null) {
             System.err.println("❌ Input mappings list is null");
             isValid = false;
         } else {
-            for (int i = 0; i < mappings.getInputMappings().size(); i++) {
-                InputMappingV2Plus inputMapping = mappings.getInputMappings().get(i);
+            for (int i = 0; i < mappings.getInputs().size(); i++) {
+                InputMappingV2Plus inputMapping = mappings.getInputs().get(i);
                 if (!validateInputMapping(inputMapping, i + 1)) {
                     isValid = false;
                 }
@@ -891,12 +891,12 @@ public class TWXToV2PlusMappingsExtractor {
         }
 
         // Validar output mappings
-        if (mappings.getOutputMappings() == null) {
+        if (mappings.getOutputs() == null) {
             System.err.println("❌ Output mappings list is null");
             isValid = false;
         } else {
-            for (int i = 0; i < mappings.getOutputMappings().size(); i++) {
-                OutputMappingV2Plus outputMapping = mappings.getOutputMappings().get(i);
+            for (int i = 0; i < mappings.getOutputs().size(); i++) {
+                OutputMappingV2Plus outputMapping = mappings.getOutputs().get(i);
                 if (!validateOutputMapping(outputMapping, i + 1)) {
                     isValid = false;
                 }
@@ -990,15 +990,15 @@ public class TWXToV2PlusMappingsExtractor {
             // Teste 1: Mappings padrão
             ProcessMappingsV2Plus defaultMappings = createDefaultMappings();
             assert defaultMappings != null : "Default mappings should not be null";
-            assert !defaultMappings.getInputMappings().isEmpty() : "Should have input mappings";
-            assert !defaultMappings.getOutputMappings().isEmpty() : "Should have output mappings";
+            assert !defaultMappings.getInputs().isEmpty() : "Should have input mappings";
+            assert !defaultMappings.getOutputs().isEmpty() : "Should have output mappings";
             System.out.println("✅ Default mappings test passed");
 
             // Teste 2: Mappings Caetano Retail
             ProcessMappingsV2Plus caetanoMappings = createCaetanoRetailMappings();
             assert caetanoMappings != null : "Caetano mappings should not be null";
-            assert !caetanoMappings.getInputMappings().isEmpty() : "Should have input mappings";
-            assert !caetanoMappings.getOutputMappings().isEmpty() : "Should have output mappings";
+            assert !caetanoMappings.getInputs().isEmpty() : "Should have input mappings";
+            assert !caetanoMappings.getOutputs().isEmpty() : "Should have output mappings";
             System.out.println("✅ Caetano Retail mappings test passed");
 
             // Teste 3: Validação
@@ -1009,8 +1009,8 @@ public class TWXToV2PlusMappingsExtractor {
             // Teste 4: Extração com BPD null
             ProcessMappingsV2Plus nullMappings = extractMappings(null);
             assert nullMappings != null : "Should return mappings even for null BPD";
-            assert !nullMappings.getInputMappings().isEmpty() : "Should have default input mappings";
-            assert !nullMappings.getOutputMappings().isEmpty() : "Should have default output mappings";
+            assert !nullMappings.getInputs().isEmpty() : "Should have default input mappings";
+            assert !nullMappings.getOutputs().isEmpty() : "Should have default output mappings";
             System.out.println("✅ Null BPD handling test passed");
 
             System.out.println("🎉 All TWXToV2PlusMappingsExtractor tests passed!");

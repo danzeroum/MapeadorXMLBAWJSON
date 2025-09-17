@@ -38,11 +38,16 @@ public class TWXToV2PlusVariablesExtractor {
     public ProcessVariablesV2Plus extractVariables(Bpd bpd) {
         ProcessVariablesV2Plus variables = new ProcessVariablesV2Plus();
         if (bpd == null) {
+            System.out.println("[LOG-VARS] BPD nulo. Nenhuma variável será extraída.");
+
             return variables;
         }
+        System.out.println("[LOG-VARS] Iniciando extração de variáveis do BPD: " + bpd.getName());
 
         // Extrai Parâmetros de Entrada/Saída do BPD
         if (bpd.getBpdParameters() != null) {
+            System.out.println("[LOG-VARS] Encontrados " + bpd.getBpdParameters().size() + " parâmetros (Input/Output).");
+
             for (BpdParameter param : bpd.getBpdParameters()) {
                 ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.fromBpdParameter(param);
                 if (param.getParameterType() == 1) { // Input
@@ -51,6 +56,9 @@ public class TWXToV2PlusVariablesExtractor {
                     variables.addOutputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
                 }
             }
+        } else {
+            // Log Adicionado
+            System.out.println("[LOG-VARS] Nenhum parâmetro (Input/Output) encontrado no BPD.");
         }
 
         // Extrai Variáveis Privadas dos Pools
@@ -58,6 +66,8 @@ public class TWXToV2PlusVariablesExtractor {
         if (diagram != null && diagram.getPools() != null) {
             for (Pool pool : diagram.getPools()) {
                 if (pool.getPrivateVariables() != null) {
+                    System.out.println("[LOG-VARS] Encontradas " + pool.getPrivateVariables().size() + " variáveis privadas no Pool: " + pool.getName());
+
                     for (PrivateVariable pVar : pool.getPrivateVariables()) {
                         ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.fromPrivateVariable(pVar);
                         variables.addPrivateVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
@@ -119,6 +129,7 @@ public class TWXToV2PlusVariablesExtractor {
 
             if (artifact instanceof Teamworks && ((Teamworks) artifact).getTwClass() != null) {
                 TwClass twClass = ((Teamworks) artifact).getTwClass();
+                System.out.println("[LOG-DATATYPE] Encontrado TwClass '" + twClass.getName() + "'. Gerando definição...");
 
                 DataTypeDefinitionV2Plus dataType = new DataTypeDefinitionV2Plus();
                 dataType.setId(typeRef);
@@ -134,33 +145,24 @@ public class TWXToV2PlusVariablesExtractor {
             currentlyProcessing.remove(typeRef); // Libera o tipo do controle de ciclo
         }
     }
-
     private Map<String, Object> createJsonSchemaFromTwClass(TwClass twClass, List<DataTypeDefinitionV2Plus> dataTypes) {
         Map<String, Object> schema = new HashMap<>();
         schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
         schema.put("type", "object");
         schema.put("title", twClass.getName());
-        schema.put("description", twClass.getDescription());
 
         Map<String, Object> properties = new HashMap<>();
-        List<String> required = new ArrayList<>();
-
         if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
             for (Property prop : twClass.getDefinition().getProperties()) {
                 if(prop.getName() != null) {
                     properties.put(prop.getName(), createPropertySchema(prop, dataTypes));
-                    if (prop.isPropertyRequired()) {
-                        required.add(prop.getName());
-                    }
                 }
             }
         }
         schema.put("properties", properties);
-        if (!required.isEmpty()) {
-            schema.put("required", required);
-        }
         return schema;
     }
+
 
     private Map<String, Object> createPropertySchema(Property prop, List<DataTypeDefinitionV2Plus> dataTypes) {
         Map<String, Object> propSchema = new HashMap<>();

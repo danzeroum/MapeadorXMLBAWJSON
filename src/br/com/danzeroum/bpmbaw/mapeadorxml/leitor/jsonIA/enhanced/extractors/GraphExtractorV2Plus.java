@@ -42,12 +42,16 @@ public class GraphExtractorV2Plus {
 
             // 1. Extrair todos os componentes visuais do processo.
             List<FlowObject> allFlowObjects = extractAllFlowObjectsComplete(bpd);
-            System.out.println("📊 Found " + allFlowObjects.size() + " FlowObjects.");
-
+            System.out.println("[LOG-GRAPH] Total de FlowObjects (nós potenciais) encontrados: " + allFlowObjects.size());
+            if(allFlowObjects.isEmpty()){
+                System.err.println("[LOG-GRAPH-ERRO] Nenhum FlowObject foi encontrado. O grafo ficará vazio.");
+            }
             // 2. *** CORREÇÃO CENTRAL *** Mapear as conexões (setas) para seus nós de origem e destino.
             // Esta etapa é crucial e estava faltando. Sem ela, os 'edges' não podem ser criados.
             resolveFlowConnections(bpd.getFlows(), allFlowObjects);
-            System.out.println("🔗 Flow connections resolved.");
+            long flowsResolvidos = bpd.getFlows() != null ? bpd.getFlows().stream().filter(f -> f.getSourceObjectId() != null && f.getTargetObjectId() != null).count() : 0;
+            System.out.println("[LOG-GRAPH] Conexões de fluxo resolvidas: " + flowsResolvidos + " de " + (bpd.getFlows() != null ? bpd.getFlows().size() : 0));
+
 
             // 3. Converter os FlowObjects em Nós do grafo final.
             List<ProcessNodeV2Plus> nodes = convertFlowObjectsToNodesComplete(allFlowObjects);
@@ -58,6 +62,9 @@ public class GraphExtractorV2Plus {
             List<ProcessEdgeV2Plus> edges = extractEdgesComplete(bpd, allFlowObjects);
             graph.setEdges(edges);
             System.out.println("✅ Edges created: " + edges.size());
+            if(edges.isEmpty() && flowsResolvidos > 0){
+                System.err.println("[LOG-GRAPH-ERRO] Fluxos foram resolvidos, mas nenhuma aresta (edge) foi criada. Verifique a lógica em 'extractEdgesComplete'.");
+            }
 
             // 5. Extrair as Lanes (raias) do processo.
             List<ProcessLaneV2Plus> lanes = extractLanesComplete(bpd);

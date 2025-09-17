@@ -5,7 +5,7 @@ public class OutputMappingV2Plus {
     private String targetField;
     private String alias;
     private String description;
-
+    private String expression;
     public OutputMappingV2Plus() {}
 
     public OutputMappingV2Plus(String sourceField, String targetField) {
@@ -39,4 +39,12 @@ public class OutputMappingV2Plus {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getExpression() {
+        return expression;
+    }
+
+    public void setExpression(String expression) {
+        this.expression = expression;
+    }
 }

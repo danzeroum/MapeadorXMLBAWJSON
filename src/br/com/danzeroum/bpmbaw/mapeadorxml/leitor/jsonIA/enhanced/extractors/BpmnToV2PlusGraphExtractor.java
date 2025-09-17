@@ -8,39 +8,55 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Process;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class BpmnToV2PlusGraphExtractor {
 
     public static ProcessGraphV2Plus extractGraph(Process process) {
         ProcessGraphV2Plus graph = ProcessGraphV2Plus.create(process.getId());
 
-        // Extrai Nós (Nodes)
+        // --- LÓGICA DE MELHORIA INSPIRADA NO NAVIGATOR ---
+        // 1. Criar um mapa de ID de nó para o NOME da Lane correspondente.
+        Map<String, String> nodeIdToLaneNameMap = new HashMap<>();
+        if (process.getLaneSet() != null && process.getLaneSet().getLanes() != null) {
+            for (Lane lane : process.getLaneSet().getLanes()) {
+                if (lane.getFlowNodeRefs() != null) {
+                    for (String nodeId : lane.getFlowNodeRefs()) {
+                        // Mapeia o ID do nó para o NOME da lane, não o ID da lane.
+                        nodeIdToLaneNameMap.put(nodeId, lane.getName());
+                    }
+                }
+            }
+        }
+
+        // 2. Extrai Nós (Nodes) e já associa o nome da Lane
         if (process.getFlowElements() != null) {
             for (Object element : process.getFlowElements()) {
                 if (element instanceof FlowNode) {
                     FlowNode fn = (FlowNode) element;
                     ProcessNodeV2Plus.NodeType nodeType = ProcessNodeV2Plus.NodeType.fromString(fn.getClass().getSimpleName());
 
+                    // Busca o nome da lane no mapa
+                    String laneName = nodeIdToLaneNameMap.get(fn.getId());
+
                     ProcessNodeV2Plus node = new ProcessNodeV2Plus(
                             fn.getId(),
                             nodeType,
                             fn.getName(),
-                            null // A lane será atribuída depois
+                            laneName // Associa o nome da lane diretamente aqui
                     );
 
-                    // --- INÍCIO DA MELHORIA ---
-                    // Se o nó for uma tarefa de script, cria a referência para a lógica
                     if (nodeType == ProcessNodeV2Plus.NodeType.SCRIPT_TASK) {
-                        // O ID da lógica segue o padrão "lg:{id_do_no}"
                         node.setLogicRef("lg:" + fn.getId());
                     }
-                    // --- FIM DA MELHORIA ---
-
                     graph.addNode(node);
                 }
             }
         }
+        // --- FIM DA LÓGICA DE MELHORIA ---
 
-        // Extrai Conexões (Edges)
+        // Extrai Conexões (Edges) - Sem alterações
         if (process.getSequenceFlows() != null) {
             for (SequenceFlow sf : process.getSequenceFlows()) {
                 ProcessEdgeV2Plus edge = new ProcessEdgeV2Plus(
@@ -53,20 +69,12 @@ public class BpmnToV2PlusGraphExtractor {
             }
         }
 
-        // Extrai Raias (Lanes) e associa aos nós
+        // Extrai Raias (Lanes) - Sem alterações, já que agora usamos para mapeamento
         if (process.getLaneSet() != null && process.getLaneSet().getLanes() != null) {
             for (Lane lane : process.getLaneSet().getLanes()) {
                 ProcessLaneV2Plus pLane = new ProcessLaneV2Plus(lane.getId(), lane.getName(), ProcessLaneV2Plus.LaneType.ROLE);
                 graph.addLane(pLane);
-
-                if (lane.getFlowNodeRefs() != null) {
-                    for (String nodeId : lane.getFlowNodeRefs()) {
-                        ProcessNodeV2Plus node = graph.findNode(nodeId);
-                        if (node != null) {
-                            node.setLane(lane.getId());
-                        }
-                    }
-                }
+                // A associação dos nós à lane já foi feita acima
             }
         }
 
@@ -75,4 +83,5 @@ public class BpmnToV2PlusGraphExtractor {
 
         return graph;
     }
+
 }

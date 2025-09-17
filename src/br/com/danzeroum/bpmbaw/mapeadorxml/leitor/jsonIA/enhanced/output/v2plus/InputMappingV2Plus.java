@@ -4,7 +4,7 @@ public class InputMappingV2Plus {
     private String sourceField;
     private String targetField;
     private String description;
-
+    private String expression;
     public InputMappingV2Plus() {}
 
     public InputMappingV2Plus(String sourceField, String targetField) {
@@ -33,4 +33,11 @@ public class InputMappingV2Plus {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getExpression() {
+        return expression;
+    }
+
+    public void setExpression(String expression) {
+        this.expression = expression;
+    }
 }

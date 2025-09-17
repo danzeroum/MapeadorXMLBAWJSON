@@ -1,4 +1,4 @@
-// Local: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIA/enhanced/extractors/BpmnToV2PlusVariablesExtractor.java
+// Em: br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIA/enhanced/extractors/BpmnToV2PlusVariablesExtractor.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.ProcessDefinitionV2Plus;
@@ -7,7 +7,7 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Process;
 
 import java.util.List;
-import java.util.stream.Collectors; // Import necessário
+import java.util.stream.Collectors;
 
 /**
  * Extrator de Variáveis BPMN 2.0 (Versão Final e Aprimorada)
@@ -23,11 +23,14 @@ public class BpmnToV2PlusVariablesExtractor {
             return variables;
         }
 
+        // 1. Extrai variáveis do Processo Principal
         if (definitions.getProcess() != null) {
             extractVariablesFromProcess(definitions.getProcess(), variables);
         }
 
+        // 2. Extrai variáveis da GlobalUserTask (comum em Coach Flows)
         if (definitions.getGlobalUserTask() != null) {
+            System.out.println("    [LOG-BPMN-VARS] Encontrada GlobalUserTask, extraindo suas variáveis de I/O.");
             extractVariablesFromIoSpecification(definitions.getGlobalUserTask().getIoSpecification(), variables);
         }
         return variables;
@@ -35,40 +38,41 @@ public class BpmnToV2PlusVariablesExtractor {
 
     private static void extractVariablesFromProcess(Process process, ProcessVariablesV2Plus variables) {
         if (process == null) return;
+        System.out.println("    [LOG-BPMN-VARS] Procurando variáveis em IoSpecification e DataObjects para o processo: " + process.getName());
 
-        // 1. Extrai variáveis de Input/Output do processo principal
+        // Extrai variáveis de Input/Output do processo principal
         extractVariablesFromIoSpecification(process.getIoSpecification(), variables);
 
-        // 2. Extrai DataObjects como variáveis privadas
+        // Extrai DataObjects do nível principal como variáveis privadas
+        int dataObjectCount = (process.getDataObjects() != null) ? process.getDataObjects().size() : 0;
+        System.out.println("    [LOG-BPMN-VARS] Encontrados " + dataObjectCount + " DataObjects no nível principal.");
         extractDataObjectsAsPrivateVars(process.getDataObjects(), variables);
 
-        // 3. Busca recursivamente em SubProcessos por mais DataObjects
+        // Busca recursivamente em SubProcessos por mais DataObjects
         if (process.getFlowElements() != null) {
             for (Object element : process.getFlowElements()) {
                 if (element instanceof SubProcess) {
+                    System.out.println("    [LOG-BPMN-VARS] Entrando em SubProcesso aninhado para buscar mais variáveis: " + ((SubProcess) element).getName());
                     extractVariablesFromSubProcess((SubProcess) element, variables);
                 }
             }
         }
     }
 
-    /**
-     * MÉTODO CORRIGIDO
-     * Extrai DataObjects de um SubProcesso, filtrando-os da lista geral de flowElements.
-     */
     private static void extractVariablesFromSubProcess(SubProcess subProcess, ProcessVariablesV2Plus variables) {
         if (subProcess == null || subProcess.getFlowElements() == null) return;
 
-        // --- INÍCIO DA CORREÇÃO ---
         // Filtra a lista 'flowElements' para obter apenas os objetos do tipo DataObject.
         List<DataObject> dataObjectsInSubProcess = subProcess.getFlowElements().stream()
                 .filter(DataObject.class::isInstance)
                 .map(DataObject.class::cast)
                 .collect(Collectors.toList());
 
-        // Agora, passa a lista filtrada para o método que sabe como processá-la.
+        if (!dataObjectsInSubProcess.isEmpty()) {
+            System.out.println("    [LOG-BPMN-VARS-SUB] Encontrados " + dataObjectsInSubProcess.size() + " DataObjects no SubProcesso: " + subProcess.getName());
+        }
+
         extractDataObjectsAsPrivateVars(dataObjectsInSubProcess, variables);
-        // --- FIM DA CORREÇÃO ---
 
         // Continua a busca recursiva por outros SubProcessos aninhados.
         for (Object element : subProcess.getFlowElements()) {

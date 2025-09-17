@@ -77,8 +77,15 @@ public class BpmnToV2PlusLogicExtractor {
         if (calledElementId == null || !processedArtifactIds.add(calledElementId)) {
             return;
         }
+        System.out.println("    [LOG-BPMN-LOGIC] Encontrada CallActivity '" + callActivity.getName() + "'. Tentando carregar artefato referenciado: " + calledElementId);
 
         Object artifact = loader.getArtefatoDoCache(calledElementId);
+
+        if (artifact == null) { // Log Adicionado
+            System.err.println("    [LOG-BPMN-LOGIC-ERRO] Artefato '" + calledElementId + "' não encontrado no cache. A lógica deste serviço não será extraída.");
+            return;
+        }
+        System.out.println("    [LOG-BPMN-LOGIC] Artefato '" + calledElementId + "' encontrado. Tipo: " + artifact.getClass().getSimpleName());
 
         if (artifact instanceof Teamworks) {
             Teamworks twService = (Teamworks) artifact;

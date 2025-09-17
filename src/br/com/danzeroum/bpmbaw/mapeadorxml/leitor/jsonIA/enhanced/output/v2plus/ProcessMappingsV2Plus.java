@@ -1,73 +1,79 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ProcessMappingsV2Plus - CORRIGIDO
+ * (Versão Final e Corrigida)
+ * Representa a estrutura de mapeamentos, com listas e métodos auxiliares
+ * para adicionar novos mapeamentos de forma segura.
  */
 public class ProcessMappingsV2Plus {
 
+    @JsonProperty("exprLang")
+    private String exprLang;
+
+    // Os nomes aqui são os do formato final.
+    // O parser legado pode usar campos temporários com outros nomes.
+    @JsonProperty("inputs")
+    private List<InputMappingV2Plus> inputs;
+
+    @JsonProperty("outputs")
+    private List<OutputMappingV2Plus> outputs;
+
+    @JsonProperty("transformations")
+    private List<TransformationRuleV2Plus> transformations;
+
+    // Campos temporários para o parser legado (podem ser removidos após a transformação)
     private List<InputMappingV2Plus> inputMappings;
     private List<OutputMappingV2Plus> outputMappings;
-    private String exprLang; // ADICIONADO para método setExprLang
 
     public ProcessMappingsV2Plus() {
+        this.inputs = new ArrayList<>();
+        this.outputs = new ArrayList<>();
+        this.transformations = new ArrayList<>();
+        // Campos legados
         this.inputMappings = new ArrayList<>();
         this.outputMappings = new ArrayList<>();
-        this.exprLang = "cel"; // Default
+        this.exprLang = "cel";
     }
 
-    // CORRIGIDO: Método setExprLang
-    public void setExprLang(String exprLang) {
-        this.exprLang = exprLang;
-    }
+    // --- MÉTODOS ADICIONADOS PARA CORRIGIR O ERRO ---
 
-    public String getExprLang() {
-        return exprLang;
-    }
-
-    // CORRIGIDO: addInputMapping com 3 parâmetros
     public void addInputMapping(String sourceField, String targetField, String description) {
-        if (inputMappings == null) {
-            inputMappings = new ArrayList<>();
+        if (this.inputMappings == null) {
+            this.inputMappings = new ArrayList<>();
         }
-        InputMappingV2Plus mapping = new InputMappingV2Plus(sourceField, targetField, description);
-        inputMappings.add(mapping);
+        this.inputMappings.add(new InputMappingV2Plus(sourceField, targetField, description));
     }
 
-    // CORRIGIDO: addOutputMapping com 4 parâmetros
     public void addOutputMapping(String sourceField, String targetField, String alias, String description) {
-        if (outputMappings == null) {
-            outputMappings = new ArrayList<>();
+        if (this.outputMappings == null) {
+            this.outputMappings = new ArrayList<>();
         }
-        OutputMappingV2Plus mapping = new OutputMappingV2Plus(sourceField, targetField, alias, description);
-        outputMappings.add(mapping);
+        this.outputMappings.add(new OutputMappingV2Plus(sourceField, targetField, alias, description));
     }
 
-    // Sobrecarga para compatibilidade com 2 parâmetros
-    public void addInputMapping(String sourceField, String targetField) {
-        addInputMapping(sourceField, targetField, "Auto-generated mapping");
-    }
+    // --- FIM DA ADIÇÃO ---
 
-    public void addOutputMapping(String sourceField, String targetField) {
-        addOutputMapping(sourceField, targetField, sourceField, "Auto-generated mapping");
-    }
+    // Getters e Setters para a estrutura final
+    public String getExprLang() { return exprLang; }
+    public void setExprLang(String exprLang) { this.exprLang = exprLang; }
 
-    // Getters e setters existentes...
-    public List<InputMappingV2Plus> getInputMappings() {
-        return inputMappings != null ? inputMappings : new ArrayList<>();
-    }
+    public List<InputMappingV2Plus> getInputs() { return inputs; }
+    public void setInputs(List<InputMappingV2Plus> inputs) { this.inputs = inputs; }
 
-    public void setInputMappings(List<InputMappingV2Plus> inputMappings) {
-        this.inputMappings = inputMappings != null ? inputMappings : new ArrayList<>();
-    }
+    public List<OutputMappingV2Plus> getOutputs() { return outputs; }
+    public void setOutputs(List<OutputMappingV2Plus> outputs) { this.outputs = outputs; }
 
-    public List<OutputMappingV2Plus> getOutputMappings() {
-        return outputMappings != null ? outputMappings : new ArrayList<>();
-    }
+    public List<TransformationRuleV2Plus> getTransformations() { return transformations; }
+    public void setTransformations(List<TransformationRuleV2Plus> transformations) { this.transformations = transformations; }
 
-    public void setOutputMappings(List<OutputMappingV2Plus> outputMappings) {
-        this.outputMappings = outputMappings != null ? outputMappings : new ArrayList<>();
-    }
+    // Getters e Setters para os campos legados
+    public List<InputMappingV2Plus> getInputMappings() { return inputMappings; }
+    public void setInputMappings(List<InputMappingV2Plus> inputMappings) { this.inputMappings = inputMappings; }
+
+    public List<OutputMappingV2Plus> getOutputMappings() { return outputMappings; }
+    public void setOutputMappings(List<OutputMappingV2Plus> outputMappings) { this.outputMappings = outputMappings; }
 }

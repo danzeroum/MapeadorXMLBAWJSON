@@ -49,11 +49,15 @@ public class TWXToV2PlusMasterExtractor {
             TWXToV2PlusVariablesExtractor varExtractor = new TWXToV2PlusVariablesExtractor(loader);
             ProcessVariablesV2Plus variables = varExtractor.extractVariables(bpd);
             definition.setVariables(variables);
+            System.out.println("[LOG-MASTER] Variáveis extraídas. Inputs: " + variables.getInput().size() + ", Outputs: " + variables.getOutput().size() + ", Privadas: " + variables.getPrivateVars().size());
 
             // 2. Extrair grafo (passando apenas o diagrama)
             System.out.println("🔗 Extracting graph...");
             ProcessGraphV2Plus graph = GraphExtractorV2Plus.extractGraph(diagram);
             definition.setGraph(graph);
+            System.out.println("[LOG-MASTER] Grafo extraído. Nós: " + graph.getNodes().size() + ", Arestas: " + graph.getEdges().size());
+
+
 
             // 3. Extrair condições (passando apenas o diagrama)
             System.out.println("🔀 Extracting conditions...");
