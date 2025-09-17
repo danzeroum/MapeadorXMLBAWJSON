@@ -1,6 +1,5 @@
-package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA;
+package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2;
 
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.ProcessLoader;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Process;
@@ -20,6 +19,7 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.ProcessVariable;
 
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * (VERSÃO FINAL)
