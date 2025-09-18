@@ -1,8 +1,11 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2;
 
-
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportGenerator;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.ProcessLoader;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2.BoundaryEvent;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2.Coach;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2.CoachView;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2.InlineScript;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportV2.UiComponent;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.FormTask;
@@ -11,28 +14,29 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coach.CoachLayout;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coachng.ContentBoxContrib;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coachng.Layout;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coachng.LayoutItem;
-import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.cv.CoachView;
-import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.json.JsonReport;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item;
-import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Link;
-import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.TWComponent;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-public class JsonCoachNavigator {
+/**
+ * Navegador de UI refatorado para popular a seção 'uiReport' do JSON,
+ * resolvendo o conflito com a lista 'rootView' da classe Artifact.
+ */
+public class JsonCoachNavigatorV2 {
 
-    private final JsonReportGenerator generator;
-    private final ProcessLoader loader;
-    private JAXBContext coachLayoutContext;
+    private final JsonReportGeneratorV2 generator;
+    private final ProcessLoaderV2Plus loader;
+    private final JAXBContext coachLayoutContext;
     private final Set<String> discoveredCoachViewIds = new HashSet<>();
-    Set<String> nomesPadrao = new HashSet<>(Arrays.asList(
+    private final Set<String> nomesPadrao = new HashSet<>(Arrays.asList(
             "Image", "Text Area Minimum Size", "Input Decimal", "Button",
             "Text Area", "Text", "Select", "Section", "Date Time Picker",
             "View Responsive CSS", "Vertical Section", "Stack Container",
@@ -42,30 +46,24 @@ public class JsonCoachNavigator {
             "Responsive Column", "Decimal", "Integer", "Horizontal Section"
     ));
 
-    public JsonCoachNavigator(JsonReportGenerator generator, ProcessLoader loader) {
+    public JsonCoachNavigatorV2(JsonReportGeneratorV2 generator, ProcessLoaderV2Plus loader) throws JAXBException {
         this.generator = generator;
         this.loader = loader;
-        try {
-            this.coachLayoutContext = JAXBContext.newInstance(CoachLayout.class);
-        } catch (Exception e) {
-            throw new RuntimeException("Falha ao inicializar JAXBContext para CoachLayout", e);
-        }
+        this.coachLayoutContext = JAXBContext.newInstance(CoachLayout.class);
     }
-
 
     public void runAnalysis() {
         // *** CORREÇÃO APLICADA AQUI ***
-        // Para evitar ConcurrentModificationException, criamos uma cópia da lista de chaves
+        // Para evitar ConcurrentModificationException, criamos uma cópia da coleção de artefatos
         // para iterar, permitindo que o 'loader' adicione novos artefatos ao cache original.
-        Set<String> artifactIdsToProcess = new HashSet<>(loader.getCacheDeArtefatos().keySet());
+        Collection<Object> artifactsToProcess = new ArrayList<>(loader.getCacheDeArtefatos().values());
 
-        // Etapa 1: Navega por todos os Coaches para preencher a seção "coaches" e descobrir os IDs das Views
-        for (String artifactId : artifactIdsToProcess) {
-            Object artifactObj = loader.getArtefatoDoCache(artifactId);
+        // Itera sobre a cópia dos artefatos carregados para encontrar processos e serviços
+        for (Object artifactObj : artifactsToProcess) {
             if (artifactObj instanceof Teamworks) {
                 Teamworks tw = (Teamworks) artifactObj;
                 if (tw.getProcess() != null) {
-                    // Lógica para Coaches em Serviços Legados
+                    // Lógica para Coaches em Serviços Legados (baseado em 'item')
                     if (tw.getProcess().getItems() != null) {
                         tw.getProcess().getItems().forEach(item -> {
                             if ("CoachNG".equalsIgnoreCase(item.getTWComponentName())) {
@@ -73,15 +71,14 @@ public class JsonCoachNavigator {
                             }
                         });
                     }
-                    // Lógica para Coaches Modernos (Client-Side)
+                    // Lógica para Coaches Modernos (Client-Side, baseado em 'coachflow')
                     if (tw.getProcess().getCoachflow() != null && tw.getProcess().getCoachflow().getDefinitions() != null) {
                         processModernCoach(tw.getProcess(), tw.getProcess().getCoachflow().getDefinitions());
                     }
                 }
             }
         }
-
-        // Etapa 2: Com a lista de IDs de Views, processa os detalhes de cada uma
+        // Após descobrir todas as views, processa os detalhes delas
         processDiscoveredCoachViews();
     }
 
@@ -99,35 +96,35 @@ public class JsonCoachNavigator {
                         formTask.getFormDefinition().getCoachDefinition().getLayout() != null &&
                         formTask.getFormDefinition().getCoachDefinition().getLayout().getLayoutItems() != null) {
 
-                    JsonReport.JsonCoach jsonCoach = new JsonReport.JsonCoach();
+                    Coach jsonCoach = new Coach();
                     jsonCoach.setCoachName(formTask.getName());
                     jsonCoach.setParentServiceId(process.getId());
                     jsonCoach.setParentServiceName(process.getName());
-                    jsonCoach.setCoachId("coachId_"+formTask.getId());
-
+                    jsonCoach.setCoachId("coachId_" + formTask.getId());
 
                     Layout modernLayout = formTask.getFormDefinition().getCoachDefinition().getLayout();
                     for (LayoutItem item : modernLayout.getLayoutItems()) {
                         jsonCoach.getComponents().add(transformModernLayoutItem(item));
                     }
+                    // Adiciona o Coach na seção correta do relatório
                     generator.getReport().getUiReport().getCoaches().add(jsonCoach);
                 }
             }
         }
     }
 
-    private JsonReport.JsonUiComponent transformModernLayoutItem(LayoutItem item) {
-        JsonReport.JsonUiComponent component = new JsonReport.JsonUiComponent();
+    private UiComponent transformModernLayoutItem(LayoutItem item) {
+        UiComponent component = new UiComponent();
         component.setComponentId(item.getLayoutItemId());
         component.setType("ViewRef");
         component.setBinding(item.getBinding());
 
         if (item.getViewUUID() != null) {
             String cleanId = loader.getCleanId(item.getViewUUID());
-            loader.loadArtefatoSeNaoExistir(cleanId);
+            loader.loadDependentArtifactIfNotExists(cleanId);
             Object artifact = loader.getArtefatoDoCache(cleanId);
             if (artifact instanceof Teamworks) {
-                CoachView cv = ((Teamworks) artifact).getCoachView();
+                br.com.danzeroum.bpmbaw.mapeadorxml.modelo.cv.CoachView cv = ((Teamworks) artifact).getCoachView();
                 if (cv != null) {
                     if (!nomesPadrao.contains(cv.getName())) {
                         component.setCoachViewId(cleanId);
@@ -139,12 +136,8 @@ public class JsonCoachNavigator {
             }
         }
 
-        boolean filteredHasTw = false;
         if (item.getConfigData() != null) {
-            // Garante que não herdaremos configurações anteriores
-            component.getConfiguration().clear();
-
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coachng.ConfigData config : item.getConfigData()) {
+            item.getConfigData().forEach(config -> {
                 String option = config.getOptionName();
                 String value = config.getValue();
                 if (option != null && value != null) {
@@ -152,20 +145,11 @@ public class JsonCoachNavigator {
                         component.setLabel(value);
                     } else if (option.toLowerCase().startsWith("event.on")) {
                         component.getEvents().put(option, value);
-                    } else if (value.contains("tw.")) {
+                    } else {
                         component.getConfiguration().put(option, value);
-                        filteredHasTw = true;
                     }
                 }
-            }
-
-            // Se não há nenhuma configuração com "tw.", remove completamente a tag "configuration"
-            if (!filteredHasTw) {
-                component.setConfiguration(null);
-            }
-        } else {
-            // Sem configData: também garante que não imprimiremos "configuration"
-            component.setConfiguration(null);
+            });
         }
 
         if (item.getContentBoxContribs() != null) {
@@ -180,18 +164,16 @@ public class JsonCoachNavigator {
         return component;
     }
 
-
     private void processLegacyCoach(Item item, br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Process process) {
-        TWComponent component = item.getTwComponent();
-        if (component == null || component.getLayoutData() == null || component.getLayoutData().isEmpty()) {
+        if (item.getTwComponent() == null || item.getTwComponent().getLayoutData() == null || item.getTwComponent().getLayoutData().isEmpty()) {
             return;
         }
 
-        JsonReport.JsonCoach jsonCoach = new JsonReport.JsonCoach();
+        Coach jsonCoach = new Coach();
         jsonCoach.setCoachName(item.getName());
         jsonCoach.setParentServiceId(process.getId());
         jsonCoach.setParentServiceName(process.getName());
-        jsonCoach.setCoachId("coachId_"+item.getProcessItemId());
+        jsonCoach.setCoachId("coachId_" + item.getProcessItemId());
 
         if (item.getProcessPrePosts() != null) {
             item.getProcessPrePosts().stream()
@@ -199,9 +181,9 @@ public class JsonCoachNavigator {
                     .forEach(p -> jsonCoach.getPreExecutionScripts().add(p.getScript()));
         }
 
-        if (component.getCoachNGBoundaryEvents() != null) {
-            component.getCoachNGBoundaryEvents().forEach(be -> {
-                JsonReport.BoundaryEvent event = new JsonReport.BoundaryEvent();
+        if (item.getTwComponent().getCoachNGBoundaryEvents() != null) {
+            item.getTwComponent().getCoachNGBoundaryEvents().forEach(be -> {
+                BoundaryEvent event = new BoundaryEvent();
                 event.setViewPath(be.getViewPath());
                 event.setEventLabel(be.getEventLabel());
                 event.setFiresValidation(be.getFireValidation() == 1);
@@ -210,7 +192,7 @@ public class JsonCoachNavigator {
         }
 
         try {
-            CoachLayout layout = parseLayoutData(component.getLayoutData());
+            CoachLayout layout = parseLayoutData(item.getTwComponent().getLayoutData());
             if (layout != null && layout.getItems() != null) {
                 for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coach.LayoutItem layoutItem : layout.getItems()) {
                     jsonCoach.getComponents().add(transformLegacyLayoutItem(layoutItem));
@@ -219,24 +201,24 @@ public class JsonCoachNavigator {
         } catch (Exception e) {
             System.err.println("ERRO: Falha ao parsear layout do Coach legado: " + item.getName());
         }
-
+        // Adiciona o Coach na seção correta do relatório
         generator.getReport().getUiReport().getCoaches().add(jsonCoach);
     }
 
-    private JsonReport.JsonUiComponent transformLegacyLayoutItem(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coach.LayoutItem item) {
-        JsonReport.JsonUiComponent component = new JsonReport.JsonUiComponent();
+    private UiComponent transformLegacyLayoutItem(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coach.LayoutItem item) {
+        UiComponent component = new UiComponent();
         component.setComponentId(item.getLayoutItemId());
         component.setType(item.getXsiType());
         component.setBinding(item.getBinding());
 
         if (item.getViewUUID() != null) {
             String cleanId = loader.getCleanId(item.getViewUUID());
-            loader.loadArtefatoSeNaoExistir(cleanId);
+            loader.loadDependentArtifactIfNotExists(cleanId);
             Object artifact = loader.getArtefatoDoCache(cleanId);
             if (artifact instanceof Teamworks) {
-                CoachView cv = ((Teamworks) artifact).getCoachView();
-                if( cv != null ) {
-                    if( !nomesPadrao.contains(cv.getName())){
+                br.com.danzeroum.bpmbaw.mapeadorxml.modelo.cv.CoachView cv = ((Teamworks) artifact).getCoachView();
+                if (cv != null) {
+                    if (!nomesPadrao.contains(cv.getName())) {
                         component.setCoachViewId(cleanId);
                         discoveredCoachViewIds.add(cleanId);
                     } else {
@@ -246,8 +228,8 @@ public class JsonCoachNavigator {
             }
         }
 
-        if(item.getConfigData() != null) {
-            for(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.coach.ConfigData config : item.getConfigData()) {
+        if (item.getConfigData() != null) {
+            item.getConfigData().forEach(config -> {
                 if (config.getOptionName() != null && config.getValue() != null) {
                     if ("@label".equals(config.getOptionName())) {
                         component.setLabel(config.getValue());
@@ -257,7 +239,7 @@ public class JsonCoachNavigator {
                         component.getConfiguration().put(config.getOptionName(), config.getValue());
                     }
                 }
-            }
+            });
         }
 
         if (item.getContentBoxContributions() != null) {
@@ -273,35 +255,33 @@ public class JsonCoachNavigator {
     }
 
     private void processDiscoveredCoachViews() {
-
-
         for (String cvId : discoveredCoachViewIds) {
             Object artifact = loader.getArtefatoDoCache(cvId);
             if (artifact instanceof Teamworks) {
-                CoachView cv = ((Teamworks) artifact).getCoachView();
+                br.com.danzeroum.bpmbaw.mapeadorxml.modelo.cv.CoachView cv = ((Teamworks) artifact).getCoachView();
                 if (cv != null) {
-                    JsonReport.JsonCoachView jsonCv = new JsonReport.JsonCoachView();
+                    CoachView jsonCv = new CoachView();
                     jsonCv.setId(cv.getId());
                     jsonCv.setName(cv.getName());
-                    System.out.println(cv.getName());
-                    // Processa apenas scripts que atendem às condições
+
                     if (cv.getInlineScripts() != null) {
                         cv.getInlineScripts().forEach(s -> {
                             if ("Inline Javascript".equals(s.getName()) && s.getScriptBlock() != null && !s.getScriptBlock().isEmpty()) {
-                                JsonReport.InlineScript jsonScript = new JsonReport.InlineScript();
+                                InlineScript jsonScript = new InlineScript();
                                 jsonScript.setName(s.getName());
                                 jsonScript.setScriptType(s.getScriptType());
                                 jsonScript.setScriptBlock(s.getScriptBlock());
                                 jsonCv.getInlineScripts().add(jsonScript);
-                                generator.getReport().getUiReport().getCoachViews().add(jsonCv);
                             }
                         });
+                    }
+                    if (!jsonCv.getInlineScripts().isEmpty()) {
+                        generator.getReport().getUiReport().getCoachViews().add(jsonCv);
                     }
                 }
             }
         }
     }
-
 
     private CoachLayout parseLayoutData(String layoutXml) throws Exception {
         String unescapedXml = layoutXml.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"");

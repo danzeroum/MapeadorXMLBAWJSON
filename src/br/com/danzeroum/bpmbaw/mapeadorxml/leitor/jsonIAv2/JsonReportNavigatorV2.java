@@ -1,6 +1,9 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.*;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services.BpmnProcessorService;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services.TeamworksProcessorService;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.services.VariableEnricherService;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Bpd;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.BusinessProcessDiagram;
@@ -21,83 +24,40 @@ import java.util.*;
 public class JsonReportNavigatorV2 {
 
     private final JsonReportGeneratorV2 generator;
-    private final ProcessLoader loader;
+    private final ProcessLoaderV2Plus loader;
 
+    private final BpmnProcessorService bpmnProcessor;
+    private final TeamworksProcessorService teamworksProcessor;
+    private final ExecutionPathGeneratorService pathGenerator;
+    private final VariableEnricherService variableEnricher;
     private static final Set<String> PRIMITIVE_TYPES = new HashSet<String>(Arrays.asList(
             "String", "Integer", "Boolean", "Decimal", "Date", "Time", "DateTime", "ANY"
     ));
 
-    public JsonReportNavigatorV2(JsonReportGeneratorV2 generator, ProcessLoader loader) {
+    public JsonReportNavigatorV2(JsonReportGeneratorV2 generator, ProcessLoaderV2Plus loader) {
         this.generator = generator;
         this.loader = loader;
+
+        // Inicializa todos os serviços necessários
+        this.variableEnricher = new VariableEnricherService(generator, loader);
+        this.bpmnProcessor = new BpmnProcessorService(generator, loader, variableEnricher);
+        this.teamworksProcessor = new TeamworksProcessorService(generator, loader, variableEnricher);
+        this.pathGenerator = new ExecutionPathGeneratorService();
     }
 
     // ============================
     // Entrada principal
     // ============================
     public void populateReport(String rootObjectId) {
-        System.out.println("[NAV-V2] Iniciando populateReport V2...");
+        System.out.println("[NAVIGATOR V2] Iniciando orquestração da análise...");
 
-        if (loader.getCacheDeArtefatos().isEmpty()) {
-            System.out.println("[NAV-V2][WARN] Cache vazio.");
-            return;
-        }
+        // 1. Processa a estrutura de todos os artefatos carregados
+        processAllArtifacts();
 
-        // 1) ORDEM a partir do root (BFS no grafo de chamadas)
-        String rootClean = rootObjectId == null ? null : loader.getCleanId(rootObjectId);
-        if (rootClean != null && loader.getArtefatoDoCache(rootClean) == null) {
-            System.out.println("[NAV-V2][WARN] Root '" + rootObjectId + "' não encontrado. Usando ordem padrão do cache.");
-            rootClean = null;
-        }
-        LinkedHashSet<String> artifactsOrder = (rootClean != null)
-                ? buildArtifactOrderFromRoot(rootClean)
-                : new LinkedHashSet<String>(loader.getCacheDeArtefatos().keySet());
-        System.out.println("[NAV-V2] Artefatos na ordem calculada: " + artifactsOrder.size());
+        // 2. Após a estrutura estar montada, gera os caminhos de execução
+        generateExecutionPaths();
 
-        // 2) Processar artefatos nesta ordem
-        for (String artifactId : artifactsOrder) {
-            Object obj = loader.getArtefatoDoCache(artifactId);
-            ProcessLoader.ArtifactLocation loc = loader.findArtifactLocation(artifactId);
-
-            if (loc == null || loc.objectInfo == null) {
-                System.out.println("[NAV-V2][WARN] Sem metadata para " + artifactId);
-                continue;
-            }
-
-            JsonReportV2.Artifact art = generator.createOrGetArtifact(
-                    loc.objectInfo.getId(),
-                    loc.objectInfo.getName(),
-                    loc.objectInfo.getType(),
-                    loc.filePath
-            );
-
-            if (obj instanceof Definitions) {
-                visitBpmnDefinitions((Definitions) obj, art);
-            } else if (obj instanceof Teamworks) {
-                Teamworks tw = (Teamworks) obj;
-                if (tw.getProcess() != null) {
-                    visitLegacyService(tw.getProcess(), art);
-                } else if (tw.getBpd() != null) {
-                    visitBpdLegado(tw.getBpd(), art);
-                } else if (tw.getTwClass() != null) {
-                    visitTwClass(tw.getTwClass());
-                } else if (tw.getCoachView() != null) {
-                    visitCoachView(tw.getCoachView());
-                } else {
-                    System.out.println("[NAV-V2][INFO] Teamworks sem sub-tipo conhecido: " + artifactId);
-                }
-            } else {
-                System.out.println("[NAV-V2][INFO] Ignorando tipo de objeto não mapeado: " + obj.getClass().getName());
-            }
-
-            // 3) Se for o artefato raiz, montar rootView linear DFS iterativa (depth=1) e paths
-            if (rootClean != null && art.getId() != null && rootClean.equals(loader.getCleanId(art.getId()))) {
-                buildRootViewIterative(art, rootClean, 1);
-                buildExecutionPathsForArtifact(art);
-            }
-        }
-
-        System.out.println("[NAV-V2] Conclusão do populateReport V2.");
+        System.out.println("[NAVIGATOR V2] Análise orquestrada concluída com sucesso.");
     }
 
     // ============================
@@ -129,6 +89,60 @@ public class JsonReportNavigatorV2 {
         for (String id : loader.getCacheDeArtefatos().keySet()) order.add(id);
         return order;
     }
+
+    private void processAllArtifacts() {
+        // Cria uma cópia da lista de IDs para iterar com segurança
+        System.out.println("[NAVIGATOR V2] FASE 1: Processando a estrutura de " + loader.getCacheDeArtefatos().size() + " artefatos...");
+
+        List<String> artifactIds = new ArrayList<>(loader.getCacheDeArtefatos().keySet());
+
+        for (String artifactId : artifactIds) {
+            Object artifactData = loader.getArtefatoDoCache(artifactId);
+            ProcessLoaderV2Plus.ArtifactLocation location = loader.findArtifactLocation(artifactId);
+
+            if (location == null || location.objectInfo == null) {
+                System.err.println("AVISO: Metadados não encontrados para o artefato: " + artifactId);
+                continue;
+            }
+
+            // Cria ou obtém o objeto do artefato no relatório JSON.
+            JsonReportV2.Artifact artifactJson = generator.createOrGetArtifact(
+                    location.objectInfo.getId(),
+                    location.objectInfo.getName(),
+                    location.objectInfo.getType(),
+                    location.filePath
+            );
+
+            // Delega o processamento para o serviço correto.
+            if (artifactData instanceof Definitions) {
+                bpmnProcessor.processDefinitions((Definitions) artifactData, artifactJson);
+            } else if (artifactData instanceof Teamworks) {
+                teamworksProcessor.processLegacyService(((Teamworks) artifactData).getProcess(), artifactJson);
+            }
+        }
+    }
+
+    private void generateExecutionPaths() {
+        System.out.println("[NAVIGATOR V2] Gerando caminhos de execução para todos os artefatos...");
+        List<JsonReportV2.Artifact> artifacts = generator.getReport().getArtifacts();
+
+        for (JsonReportV2.Artifact artifact : artifacts) {
+            try {
+                // Chama o serviço para gerar os caminhos
+                List<JsonReportV2.ExecutionPath> paths = pathGenerator.generateExecutionPaths(artifact);
+
+                if (!paths.isEmpty()) {
+                    // Adiciona os caminhos gerados à lista principal do relatório
+                    generator.getReport().getExecutionPaths().addAll(paths);
+                    System.out.printf("  -> Gerados %d caminhos de execução para o artefato: %s%n", paths.size(), artifact.getName());
+                }
+            } catch (Exception e) {
+                System.err.printf("ERRO: Falha ao gerar caminhos de execução para o artefato '%s': %s%n", artifact.getName(), e.getMessage());
+            }
+        }
+    }
+
+
 
     /** Passos ORDENADOS sem expandir subprocessos (para descoberta de chamadas). */
     private List<JsonReportV2.FlowStep> generateOrderedStepsForArtifactShallow(String artifactId) {
@@ -570,7 +584,7 @@ public class JsonReportNavigatorV2 {
 
     private String resolveParticipantName(String participantId) {
         try {
-            ProcessLoader.ArtifactLocation loc = loader.findArtifactLocation(participantId);
+            ProcessLoaderV2Plus.ArtifactLocation loc = loader.findArtifactLocation(participantId);
             if (loc != null && loc.objectInfo != null && loc.objectInfo.getName() != null) {
                 return loc.objectInfo.getName();
             }

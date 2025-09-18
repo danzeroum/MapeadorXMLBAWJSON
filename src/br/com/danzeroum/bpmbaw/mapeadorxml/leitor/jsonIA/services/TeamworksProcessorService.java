@@ -26,6 +26,8 @@ public class TeamworksProcessorService {
 
     public void processLegacyService(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Process process,
                                      JsonReportV2.Artifact artifact) {
+
+        if (process == null) return;
         // Process variables
         populateLegacyVariables(process, artifact);
 

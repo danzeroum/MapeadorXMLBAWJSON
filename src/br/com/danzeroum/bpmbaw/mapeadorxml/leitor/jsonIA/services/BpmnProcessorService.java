@@ -37,19 +37,19 @@ public class BpmnProcessorService {
         Process process = definitions.getProcess();
         if (process == null) return;
 
-        // Process variables
+        // 1. Processa variáveis de Input/Output
         populateBpmnVariables(process, artifact);
 
-        // Process participants from lanes
+        // 2. Processa participantes (extraídos das lanes)
         addParticipantsFromLanes(process, artifact);
 
-        // Build graph structure
+        // 3. Constrói a estrutura do grafo (nós, arestas, gateways)
         buildGraphStructure(process, artifact);
 
-        // Generate flow steps
+        // 4. Gera a lista sequencial de passos (flow)
         generateFlowSteps(process, artifact);
 
-        // Enrich all variables
+        // 5. Enriquece os tipos de todas as variáveis encontradas
         variableEnricher.enrichAllVariablesInArtifact(artifact);
     }
 
@@ -78,22 +78,19 @@ public class BpmnProcessorService {
         }
     }
 
+
     private void addParticipantsFromLanes(Process process, JsonReportV2.Artifact artifact) {
         if (process.getLaneSet() == null || process.getLaneSet().getLanes() == null) return;
 
         for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Lane lane : process.getLaneSet().getLanes()) {
             if (lane.getPartitionElementRef() != null && !lane.getPartitionElementRef().trim().isEmpty()) {
-                String participantName = resolveParticipantName(lane.getPartitionElementRef());
-                if (participantName == null || participantName.trim().isEmpty()) {
-                    participantName = lane.getPartitionElementRef();
-                }
-                if (!artifact.getParticipants().contains(participantName)) {
+                String participantName = loader.findArtifactLocation(lane.getPartitionElementRef()).objectInfo.getName();
+                if (participantName != null && !artifact.getParticipants().contains(participantName)) {
                     artifact.getParticipants().add(participantName);
                 }
             }
         }
     }
-
     private String resolveParticipantName(String participantId) {
         try {
             ProcessLoaderV2Plus.ArtifactLocation loc = loader.findArtifactLocation(participantId);

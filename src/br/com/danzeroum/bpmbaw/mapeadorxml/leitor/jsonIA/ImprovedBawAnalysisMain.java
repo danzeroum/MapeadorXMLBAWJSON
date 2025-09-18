@@ -26,8 +26,6 @@ public class ImprovedBawAnalysisMain {
 
 
 
-
-
     // CORREÇÃO 3: Método executeJsonReportGenerationInicio com debugging
     public static void executeJsonReportGenerationInicio(AnalysisConfig config) throws Exception {
         System.out.println("🚀 Starting Enhanced V2 Analysis...");

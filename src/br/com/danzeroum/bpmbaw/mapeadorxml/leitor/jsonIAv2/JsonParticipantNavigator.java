@@ -7,7 +7,6 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.json.JsonReport;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.participant.Participant;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.participant.StandardMember;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.*;
 
 public class JsonParticipantNavigator {
 

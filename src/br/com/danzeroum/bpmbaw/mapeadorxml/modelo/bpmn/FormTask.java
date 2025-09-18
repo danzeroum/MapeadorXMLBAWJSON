@@ -19,4 +19,6 @@ public class FormTask extends FlowNode {
     public void setFormDefinition(FormDefinition formDefinition) {
         this.formDefinition = formDefinition;
     }
+
+
 }

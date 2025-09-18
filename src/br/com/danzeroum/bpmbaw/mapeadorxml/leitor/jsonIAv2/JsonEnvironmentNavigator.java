@@ -1,11 +1,10 @@
 // Local: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/JsonEnvironmentNavigator.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2;
 
-
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2.JsonReportGenerator;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.envar.EnvironmentVariableSet;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.json.JsonReport;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.*;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;

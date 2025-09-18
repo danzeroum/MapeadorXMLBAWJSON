@@ -12,8 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Serviço especializado em enriquecer variáveis, resolver seus tipos de dados complexos
+ * e construir as definições de Business Objects para o relatório JSON.
  * Handles variable enrichment and type resolution for process artifacts.
- * Responsible for discovering type information and creating business object definitions.
  */
 public class VariableEnricherService {
 
@@ -63,14 +64,9 @@ public class VariableEnricherService {
     }
 
     /**
-     * Enriches a single variable with type information.
-     */
-    public void enrichVariableInfo(JsonReportV2.VariableInfo variable) {
-        enrichVariable(variable, new HashSet<>());
-    }
-
-    /**
+     * Ponto de entrada principal para enriquecer todas as variáveis de um artefato.
      * Enriches all variables in an artifact (input, output, private).
+     * @param artifact O artefato JSON cujas variáveis serão enriquecidas.
      */
     public void enrichAllVariablesInArtifact(JsonReportV2.Artifact artifact) {
         if (artifact == null || artifact.getVariables() == null) {
@@ -79,17 +75,103 @@ public class VariableEnricherService {
 
         // Enrich input variables
         if (artifact.getVariables().getInput() != null) {
-            artifact.getVariables().getInput().forEach(this::enrichVariableInfo);
+            artifact.getVariables().getInput().forEach(var -> enrichVariableInfo(var, new HashSet<>()));
         }
 
         // Enrich output variables
         if (artifact.getVariables().getOutput() != null) {
-            artifact.getVariables().getOutput().forEach(this::enrichVariableInfo);
+            artifact.getVariables().getOutput().forEach(var -> enrichVariableInfo(var, new HashSet<>()));
         }
 
         // Enrich private variables (handle both getPrivate and getPrivite)
         List<JsonReportV2.VariableInfo> privateVars = getPrivateVariables(artifact);
-        privateVars.forEach(this::enrichVariableInfo);
+        privateVars.forEach(var -> enrichVariableInfo(var, new HashSet<>()));
+    }
+
+    /**
+     * Enriches a single variable with type information - versão pública
+     */
+    public void enrichVariableInfo(JsonReportV2.VariableInfo variable) {
+        enrichVariableInfo(variable, new HashSet<>());
+    }
+
+    /**
+     * Lógica recursiva principal para resolver o tipo de uma variável.
+     * Core variable enrichment logic with type resolution.
+     * @param varInfo O objeto da variável a ser enriquecido.
+     * @param visitedTypes Um conjunto para evitar recursão infinita em tipos cíclicos.
+     */
+    private void enrichVariableInfo(JsonReportV2.VariableInfo varInfo, Set<String> visitedTypes) {
+        if (varInfo == null || varInfo.getTypeId() == null || varInfo.getTypeId().trim().isEmpty()) {
+            return;
+        }
+
+        String originalTypeId = varInfo.getTypeId();
+        String cleanTypeId = normalizeIdSafe(originalTypeId);
+
+        if (cleanTypeId == null || !visitedTypes.add(cleanTypeId)) {
+            return; // Evita processamento duplicado ou ciclos
+        }
+
+        // Garante que a dependência (o TwClass do tipo) esteja carregada
+        loadArtifactSafe(originalTypeId);
+        Object artifact = getArtifactFromCacheSafe(cleanTypeId);
+
+        if (artifact instanceof Teamworks && ((Teamworks) artifact).getTwClass() != null) {
+            TwClass twClass = ((Teamworks) artifact).getTwClass();
+
+            if (PRIMITIVE_TYPES.contains(twClass.getName())) {
+                varInfo.setTypeId(twClass.getName()); // Simplifica para o nome do tipo primitivo
+                return;
+            }
+
+            // Para tipos complexos, cria a definição do Business Object
+            JsonReportV2.Definition boDefinition = createBusinessObjectDefinition(twClass, originalTypeId, visitedTypes);
+            String canonicalId = reportGenerator.addBusinessObjectDefinition(boDefinition);
+            varInfo.setTypeId(canonicalId); // Atualiza o typeId da variável para o ID canônico
+        }
+    }
+
+    /**
+     * Método alternativo para enriquecimento - compatibilidade
+     */
+    private void enrichVariable(JsonReportV2.VariableInfo varInfo, Set<String> visitedTypes) {
+        enrichVariableInfo(varInfo, visitedTypes);
+    }
+
+    /**
+     * Cria a definição estruturada de um Business Object a partir de um TwClass.
+     * Creates a business object definition from a TwClass.
+     */
+    private JsonReportV2.Definition createBusinessObjectDefinition(TwClass twClass, String originalTypeId, Set<String> visitedTypes) {
+        JsonReportV2.Definition definition = new JsonReportV2.Definition();
+        definition.setTypeId(originalTypeId);
+        definition.setTypeName(twClass.getName());
+
+        if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
+            for (Property prop : twClass.getDefinition().getProperties()) {
+                JsonReportV2.PropertyStructure propStruct = createPropertyStructure(prop, visitedTypes);
+                definition.getStructure().add(propStruct);
+            }
+        }
+        return definition;
+    }
+
+    /**
+     * Creates property structure from a TwClass property.
+     */
+    private JsonReportV2.PropertyStructure createPropertyStructure(Property property, Set<String> visitedTypes) {
+        JsonReportV2.PropertyStructure propStructure = new JsonReportV2.PropertyStructure();
+        propStructure.setName(property.getName());
+        propStructure.setList(property.isArrayProperty());
+
+        // Chamada recursiva para enriquecer o tipo da propriedade
+        JsonReportV2.VariableInfo tempVarInfo = new JsonReportV2.VariableInfo();
+        tempVarInfo.setTypeId(property.getClassRef());
+        enrichVariableInfo(tempVarInfo, new HashSet<>(visitedTypes)); // Usa uma cópia do set de visitados
+        propStructure.setTypeRef(tempVarInfo.getTypeId());
+
+        return propStructure;
     }
 
     /**
@@ -129,141 +211,6 @@ public class VariableEnricherService {
     }
 
     /**
-     * Core variable enrichment logic with type resolution.
-     */
-    private void enrichVariable(JsonReportV2.VariableInfo varInfo, Set<String> visitedTypes) {
-        if (varInfo == null || varInfo.getTypeId() == null || varInfo.getTypeId().trim().isEmpty()) {
-            return;
-        }
-
-        String originalTypeId = varInfo.getTypeId();
-        String cleanTypeId = normalizeIdSafe(originalTypeId);
-
-        if (cleanTypeId == null || !visitedTypes.add(cleanTypeId)) {
-            return;
-        }
-
-        // Load dependent artifact if not in cache
-        processLoader.loadProcessInMemory(originalTypeId);
-        Object artifact = processLoader.getArtefatoDoCache(cleanTypeId);
-
-        if (artifact instanceof Teamworks) {
-            enrichFromTeamworksArtifact((Teamworks) artifact, varInfo, originalTypeId, visitedTypes);
-        }
-    }
-    private Object getArtifactFromCacheSafe(String id) {
-        if (id == null) return null;
-
-        try {
-            // Tentar getFromCache
-            Object artifact = processLoader.getArtefatoDoCache(id);
-            if (artifact != null) return artifact;
-
-            // Tentar getArtefatoDoCache
-            java.lang.reflect.Method getCacheMethod = processLoader.getClass()
-                    .getMethod("getArtefatoDoCache", String.class);
-            return getCacheMethod.invoke(processLoader, id);
-        } catch (Exception e) {
-            System.err.println("⚠️ Could not get artifact from cache " + id + ": " + e.getMessage());
-            return null;
-        }
-    }
-    private String normalizeIdSafe(String originalId) {
-        if (originalId == null) return null;
-
-        try {
-            // Tentar método normalizeId se existir
-            return processLoader.normalizeId(originalId);
-        } catch (Exception e1) {
-            try {
-                // Fallback para getCleanId se existir
-                java.lang.reflect.Method getCleanIdMethod = processLoader.getClass().getMethod("getCleanId", String.class);
-                return (String) getCleanIdMethod.invoke(processLoader, originalId);
-            } catch (Exception e2) {
-                // Último fallback: normalização manual
-                return originalId.replace("\\", "/").trim();
-            }
-        }
-    }
-
-    /**
-     * Método auxiliar que tenta diferentes formas de carregar artefato
-     */
-    private void loadArtifactSafe(String originalId) {
-        try {
-            // Tentar carregarArtefatoSeNecessario
-            processLoader.loadProcessInMemory(originalId);
-        } catch (Exception e1) {
-            try {
-                // Tentar com reflection para loadDependentArtifactIfNotExists
-                java.lang.reflect.Method loadMethod = processLoader.getClass()
-                        .getMethod("loadDependentArtifactIfNotExists", String.class);
-                loadMethod.invoke(processLoader, originalId);
-            } catch (Exception e2) {
-                // Se todos falharem, apenas logar
-                System.err.println("⚠️ Could not load artifact " + originalId + ": " + e2.getMessage());
-            }
-        }
-    }
-    /**
-     * Enriches variable information from a Teamworks artifact (TwClass).
-     */
-    private void enrichFromTeamworksArtifact(Teamworks teamworks, JsonReportV2.VariableInfo varInfo,
-                                             String originalTypeId, Set<String> visitedTypes) {
-        if (teamworks.getTwClass() == null) return;
-
-        TwClass twClass = teamworks.getTwClass();
-
-        // Handle primitive types
-        if (twClass.getName() != null && PRIMITIVE_TYPES.contains(twClass.getName())) {
-            varInfo.setTypeId(twClass.getName());
-            return;
-        }
-
-        // Create business object definition for complex types
-        JsonReportV2.Definition definition = createBusinessObjectDefinition(twClass, originalTypeId, visitedTypes);
-        String canonicalId = reportGenerator.addBusinessObjectDefinition(definition);
-        varInfo.setTypeId(canonicalId);
-    }
-
-    /**
-     * Creates a business object definition from a TwClass.
-     */
-    private JsonReportV2.Definition createBusinessObjectDefinition(TwClass twClass, String originalTypeId,
-                                                                   Set<String> visitedTypes) {
-        JsonReportV2.Definition definition = new JsonReportV2.Definition();
-        definition.setTypeId(originalTypeId);
-        definition.setTypeName(twClass.getName());
-
-        // Process properties if available
-        if (twClass.getDefinition() != null && twClass.getDefinition().getProperties() != null) {
-            for (Property property : twClass.getDefinition().getProperties()) {
-                JsonReportV2.PropertyStructure propStructure = createPropertyStructure(property, visitedTypes);
-                definition.getStructure().add(propStructure);
-            }
-        }
-
-        return definition;
-    }
-
-    /**
-     * Creates property structure from a TwClass property.
-     */
-    private JsonReportV2.PropertyStructure createPropertyStructure(Property property, Set<String> visitedTypes) {
-        JsonReportV2.PropertyStructure propStructure = new JsonReportV2.PropertyStructure();
-        propStructure.setName(property.getName());
-        propStructure.setList(property.isArrayProperty());
-
-        // Recursively resolve property type
-        JsonReportV2.VariableInfo tempVarInfo = new JsonReportV2.VariableInfo();
-        tempVarInfo.setTypeId(property.getClassRef());
-        enrichVariable(tempVarInfo, new HashSet<>(visitedTypes));
-        propStructure.setTypeRef(tempVarInfo.getTypeId());
-
-        return propStructure;
-    }
-
-    /**
      * Ensures a variable is present in the artifact's variable lists.
      */
     private void ensureVariablePresent(JsonReportV2.Artifact artifact, String varName,
@@ -285,7 +232,7 @@ public class VariableEnricherService {
 
         // Try to enrich the variable type
         try {
-            enrichVariable(variable, new HashSet<>());
+            enrichVariableInfo(variable, new HashSet<>());
         } catch (Exception e) {
             // If enrichment fails, keep the guessed type
         }
@@ -327,7 +274,7 @@ public class VariableEnricherService {
                 break;
             case PRIVATE:
                 List<JsonReportV2.VariableInfo> privateVars = getPrivateVariables(artifact);
-                if (privateVars != null) {
+                if (privateVars != null && !privateVars.isEmpty()) {
                     privateVars.add(variable);
                 } else {
                     // Fallback to output if private list not accessible
@@ -348,17 +295,24 @@ public class VariableEnricherService {
 
         // Try getPrivate() first
         try {
-            return (List<JsonReportV2.VariableInfo>) artifact.getVariables().getClass()
-                    .getMethod("getPrivate").invoke(artifact.getVariables());
+            List<JsonReportV2.VariableInfo> privateVars = (List<JsonReportV2.VariableInfo>)
+                    artifact.getVariables().getClass().getMethod("getPrivate").invoke(artifact.getVariables());
+            if (privateVars != null) {
+                return privateVars;
+            }
         } catch (Exception e1) {
             // Try getPrivite() as fallback
             try {
-                return (List<JsonReportV2.VariableInfo>) artifact.getVariables().getClass()
-                        .getMethod("getPrivite").invoke(artifact.getVariables());
+                List<JsonReportV2.VariableInfo> privateVars = (List<JsonReportV2.VariableInfo>)
+                        artifact.getVariables().getClass().getMethod("getPrivite").invoke(artifact.getVariables());
+                if (privateVars != null) {
+                    return privateVars;
+                }
             } catch (Exception e2) {
-                return Collections.emptyList();
+                System.err.println("AVISO: Não foi possível acessar a lista de variáveis privadas do artefato");
             }
         }
+        return Collections.emptyList();
     }
 
     /**
@@ -428,7 +382,92 @@ public class VariableEnricherService {
         return splitIndex > 0 ? cleaned.substring(0, splitIndex) : cleaned;
     }
 
-    // Adicionar ao VariableEnricherService.java
+    // Métodos auxiliares para compatibilidade com ambas as versões
+
+    private Object getArtifactFromCacheSafe(String id) {
+        if (id == null) return null;
+
+        try {
+            // Tentar getArtefatoDoCache primeiro
+            return processLoader.getArtefatoDoCache(id);
+        } catch (Exception e) {
+            try {
+                // Tentar com reflection se o método não existir
+                java.lang.reflect.Method getCacheMethod = processLoader.getClass()
+                        .getMethod("getArtefatoDoCache", String.class);
+                return getCacheMethod.invoke(processLoader, id);
+            } catch (Exception e2) {
+                System.err.println("⚠️ Could not get artifact from cache " + id + ": " + e2.getMessage());
+                return null;
+            }
+        }
+    }
+
+    private String normalizeIdSafe(String originalId) {
+        if (originalId == null) return null;
+
+        try {
+            // Tentar getCleanId primeiro
+            return processLoader.getCleanId(originalId);
+        } catch (Exception e1) {
+            try {
+                // Tentar normalizeId como fallback
+                return processLoader.normalizeId(originalId);
+            } catch (Exception e2) {
+                // Último fallback: normalização manual
+                String normalized = originalId.replaceAll("\\s+", "").trim();
+                return normalized.contains("/") ?
+                        normalized.substring(normalized.lastIndexOf('/') + 1) :
+                        normalized;
+            }
+        }
+    }
+
+    /**
+     * Método auxiliar que tenta diferentes formas de carregar artefato
+     */
+    private void loadArtifactSafe(String originalId) {
+        try {
+            // Tentar loadDependentArtifactIfNotExists primeiro
+            processLoader.loadDependentArtifactIfNotExists(originalId);
+        } catch (Exception e1) {
+            try {
+                // Tentar loadProcessInMemory como fallback
+                processLoader.loadProcessInMemory(originalId);
+            } catch (Exception e2) {
+                try {
+                    // Último fallback: tentar com reflection
+                    java.lang.reflect.Method loadMethod = processLoader.getClass()
+                            .getMethod("loadArtefatoSeNaoExistir", String.class);
+                    loadMethod.invoke(processLoader, originalId);
+                } catch (Exception e3) {
+                    System.err.println("⚠️ Could not load artifact " + originalId + ": " + e3.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Enriches variable information from a Teamworks artifact (TwClass).
+     * Método da segunda versão para manter compatibilidade
+     */
+    private void enrichFromTeamworksArtifact(Teamworks teamworks, JsonReportV2.VariableInfo varInfo,
+                                             String originalTypeId, Set<String> visitedTypes) {
+        if (teamworks.getTwClass() == null) return;
+
+        TwClass twClass = teamworks.getTwClass();
+
+        // Handle primitive types
+        if (twClass.getName() != null && PRIMITIVE_TYPES.contains(twClass.getName())) {
+            varInfo.setTypeId(twClass.getName());
+            return;
+        }
+
+        // Create business object definition for complex types
+        JsonReportV2.Definition definition = createBusinessObjectDefinition(twClass, originalTypeId, visitedTypes);
+        String canonicalId = reportGenerator.addBusinessObjectDefinition(definition);
+        varInfo.setTypeId(canonicalId);
+    }
 
     /**
      * Analisa e cataloga scripts embedded problemáticos
@@ -492,23 +531,6 @@ public class VariableEnricherService {
         return false;
     }
 
-    public static class ScriptAnalysisSummary {
-        private final List<String> problematicScripts;
-        private final List<String> mixedLanguageVariables;
-
-        public ScriptAnalysisSummary(List<String> problematicScripts, List<String> mixedLanguageVariables) {
-            this.problematicScripts = new ArrayList<>(problematicScripts);
-            this.mixedLanguageVariables = new ArrayList<>(mixedLanguageVariables);
-        }
-
-        public List<String> getProblematicScripts() { return Collections.unmodifiableList(problematicScripts); }
-        public List<String> getMixedLanguageVariables() { return Collections.unmodifiableList(mixedLanguageVariables); }
-
-        public boolean hasIssues() {
-            return !problematicScripts.isEmpty() || !mixedLanguageVariables.isEmpty();
-        }
-    }
-
     /**
      * Provides debugging information about variable enrichment.
      */
@@ -547,6 +569,31 @@ public class VariableEnricherService {
     }
 
     /**
+     * Summary of script analysis results
+     */
+    public static class ScriptAnalysisSummary {
+        private final List<String> problematicScripts;
+        private final List<String> mixedLanguageVariables;
+
+        public ScriptAnalysisSummary(List<String> problematicScripts, List<String> mixedLanguageVariables) {
+            this.problematicScripts = new ArrayList<>(problematicScripts);
+            this.mixedLanguageVariables = new ArrayList<>(mixedLanguageVariables);
+        }
+
+        public List<String> getProblematicScripts() {
+            return Collections.unmodifiableList(problematicScripts);
+        }
+
+        public List<String> getMixedLanguageVariables() {
+            return Collections.unmodifiableList(mixedLanguageVariables);
+        }
+
+        public boolean hasIssues() {
+            return !problematicScripts.isEmpty() || !mixedLanguageVariables.isEmpty();
+        }
+    }
+
+    /**
      * Summary of variable enrichment results for debugging.
      */
     public static class VariableEnrichmentSummary {
@@ -569,7 +616,9 @@ public class VariableEnricherService {
         public int getTotalVariableCount() {
             return inputVariableCount + outputVariableCount + privateVariableCount;
         }
-        public List<String> getEnrichedTypes() { return Collections.unmodifiableList(enrichedTypes); }
+        public List<String> getEnrichedTypes() {
+            return Collections.unmodifiableList(enrichedTypes);
+        }
 
         @Override
         public String toString() {

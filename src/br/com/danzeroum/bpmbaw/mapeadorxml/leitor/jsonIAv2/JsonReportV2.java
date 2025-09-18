@@ -1,7 +1,6 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIAv2;
 
 import com.google.gson.annotations.SerializedName;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +12,9 @@ public class JsonReportV2 {
     private List<Artifact> artifacts = new ArrayList<>();
     private BusinessObjects businessObjects = new BusinessObjects();
     private List<ExecutionPath> executionPaths = new ArrayList<>();
-    private UiReport uiReport = new UiReport(); // <-- ADICIONADO
+    private UiReport uiReport = new UiReport();
+    private List<EnvironmentVariableUsage> environmentVariablesUsed = new ArrayList<>();
+    private List<ResourceBundleUsage> resourceBundlesUsed = new ArrayList<>();
 
     // Getters e Setters
     public Metadata getMetadata() { return metadata; }
@@ -24,16 +25,20 @@ public class JsonReportV2 {
     public void setBusinessObjects(BusinessObjects businessObjects) { this.businessObjects = businessObjects; }
     public List<ExecutionPath> getExecutionPaths() { return executionPaths; }
     public void setExecutionPaths(List<ExecutionPath> executionPaths) { this.executionPaths = executionPaths; }
-    public UiReport getUiReport() { return uiReport; } // <-- ADICIONADO
-    public void setUiReport(UiReport uiReport) { this.uiReport = uiReport; } // <-- ADICIONADO
+    public UiReport getUiReport() { return uiReport; }
+    public void setUiReport(UiReport uiReport) { this.uiReport = uiReport; }
+    public List<EnvironmentVariableUsage> getEnvironmentVariablesUsed() { return environmentVariablesUsed;}
+    public void setEnvironmentVariablesUsed(List<EnvironmentVariableUsage> environmentVariablesUsed) { this.environmentVariablesUsed = environmentVariablesUsed; }
+    public List<ResourceBundleUsage> getResourceBundlesUsed() { return resourceBundlesUsed; }
+    public void setResourceBundlesUsed(List<ResourceBundleUsage> resourceBundlesUsed) { this.resourceBundlesUsed = resourceBundlesUsed; }
 
-    // ... (demais classes internas de Metadata, Artifact, etc. permanecem as mesmas)
-    // --- Metadata ---
+
     public static class Metadata {
         private String projectName;
         private String twxFile;
         private String exportTimestamp;
         private String expressionLanguage;
+
         // Getters e Setters
         public String getProjectName() { return projectName; }
         public void setProjectName(String projectName) { this.projectName = projectName; }
@@ -43,10 +48,8 @@ public class JsonReportV2 {
         public void setExportTimestamp(String exportTimestamp) { this.exportTimestamp = exportTimestamp; }
         public String getExpressionLanguage() { return expressionLanguage; }
         public void setExpressionLanguage(String expressionLanguage) { this.expressionLanguage = expressionLanguage; }
-
     }
 
-    // --- Artifact ---
     public static class Artifact {
         private String id;
         private String name;
@@ -55,11 +58,12 @@ public class JsonReportV2 {
         private List<String> participants = new ArrayList<>();
         private Variables variables = new Variables();
         private List<FlowStep> flow = new ArrayList<>();
-        private List<FlowStep> rootView = new ArrayList<>();
+        // --- CORREÇÃO APLICADA AQUI ---
+        private List<FlowStep> rootView = new ArrayList<>(); // Alterado de List<RootView> para List<FlowStep>
         private String parentStepId;
         private Graph graph = new Graph();
-        // Getters e Setters
 
+        // Getters e Setters
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getName() { return name; }
@@ -74,39 +78,37 @@ public class JsonReportV2 {
         public void setVariables(Variables variables) { this.variables = variables; }
         public List<FlowStep> getFlow() { return flow; }
         public void setFlow(List<FlowStep> flow) { this.flow = flow; }
+
+        // --- CORREÇÃO APLICADA AQUI ---
         public List<FlowStep> getRootView() { return rootView; }
         public void setRootView(List<FlowStep> rootView) { this.rootView = rootView; }
+
         public Graph getGraph() { return graph; }
         public void setGraph(Graph graph) { this.graph = graph; }
         public String getParentStepId() { return parentStepId; }
         public void setParentStepId(String parentStepId) { this.parentStepId = parentStepId; }
     }
 
-    // --- Variables ---
     public static class Variables {
         private List<VariableInfo> input = new ArrayList<>();
         private List<VariableInfo> output = new ArrayList<>();
-        @SerializedName("private")            // <-- chave JSON será "private"
+        @SerializedName("private")
         private List<VariableInfo> privite = new ArrayList<>();
+
         // Getters e Setters
         public List<VariableInfo> getInput() { return input; }
         public void setInput(List<VariableInfo> input) { this.input = input; }
         public List<VariableInfo> getOutput() { return output; }
         public void setOutput(List<VariableInfo> output) { this.output = output; }
-
-        public List<VariableInfo> getPrivite() {
-            return privite;
-        }
-
-        public void setPrivite(List<VariableInfo> privite) {
-            this.privite = privite;
-        }
+        public List<VariableInfo> getPrivite() { return privite; }
+        public void setPrivite(List<VariableInfo> privite) { this.privite = privite; }
     }
 
     public static class VariableInfo {
         private String name;
         private String typeId;
         private boolean list;
+
         // Getters e Setters
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -116,7 +118,6 @@ public class JsonReportV2 {
         public void setList(boolean list) { this.list = list; }
     }
 
-    // --- FlowStep ---
     public static class FlowStep {
         private String stepId;
         private String name;
@@ -133,6 +134,7 @@ public class JsonReportV2 {
         private String parentStepId;
         private Integer subflowDepth;
 
+        // Getters e Setters
         public String getStepId() { return stepId; }
         public void setStepId(String stepId) { this.stepId = stepId; }
         public String getName() { return name; }
@@ -163,10 +165,10 @@ public class JsonReportV2 {
         public void setSubflowDepth(Integer subflowDepth) { this.subflowDepth = subflowDepth; }
     }
 
-
     public static class ParameterMapping {
         private List<Mapping> input = new ArrayList<>();
         private List<Mapping> output = new ArrayList<>();
+
         // Getters e Setters
         public List<Mapping> getInput() { return input; }
         public void setInput(List<Mapping> input) { this.input = input; }
@@ -177,6 +179,7 @@ public class JsonReportV2 {
     public static class Mapping {
         private String source;
         private String target;
+
         // Getters e Setters
         public String getSource() { return source; }
         public void setSource(String source) { this.source = source; }
@@ -190,17 +193,8 @@ public class JsonReportV2 {
         private String expression;
         private boolean isDefault;
         private String expressionLanguage;
+
         // Getters e Setters
-
-
-        public String getExpressionLanguage() {
-            return expressionLanguage;
-        }
-
-        public void setExpressionLanguage(String expressionLanguage) {
-            this.expressionLanguage = expressionLanguage;
-        }
-
         public String getTargetStepId() { return targetStepId; }
         public void setTargetStepId(String targetStepId) { this.targetStepId = targetStepId; }
         public String getName() { return name; }
@@ -209,9 +203,10 @@ public class JsonReportV2 {
         public void setExpression(String expression) { this.expression = expression; }
         public boolean isDefault() { return isDefault; }
         public void setDefault(boolean aDefault) { isDefault = aDefault; }
+        public String getExpressionLanguage() { return expressionLanguage; }
+        public void setExpressionLanguage(String expressionLanguage) { this.expressionLanguage = expressionLanguage; }
     }
 
-    // --- Graph ---
     public static class Graph {
         private List<Node> nodes = new ArrayList<>();
         private List<Edge> edges = new ArrayList<>();
@@ -219,6 +214,7 @@ public class JsonReportV2 {
         private List<EdgeCondition> conditions = new ArrayList<>();
         private List<String> entryPoints = new ArrayList<>();
         private List<String> endPoints = new ArrayList<>();
+
         // Getters e Setters
         public List<Node> getNodes() { return nodes; }
         public void setNodes(List<Node> nodes) { this.nodes = nodes; }
@@ -239,22 +235,16 @@ public class JsonReportV2 {
         private String type;
         private String lane;
         private String name;
+
         // Getters e Setters
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getType() { return type; }
         public void setType(String type) { this.type = type; }
         public String getLane() { return lane; }
         public void setLane(String lane) { this.lane = lane; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
     }
 
     public static class Edge {
@@ -262,6 +252,7 @@ public class JsonReportV2 {
         private String source;
         private String target;
         private String label;
+
         // Getters e Setters
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -277,6 +268,7 @@ public class JsonReportV2 {
         private String id;
         private String type;
         private String defaultFlow;
+
         // Getters e Setters
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -290,28 +282,22 @@ public class JsonReportV2 {
         private String edgeId;
         private String expression;
         private boolean isDefault;
-        private String language ;
+        private String language;
+
         // Getters e Setters
-
-        public String getLanguage() {
-            return language ;
-        }
-
-        public void setLanguage(String expressionLanguage) {
-            this.language = expressionLanguage;
-        }
-
         public String getEdgeId() { return edgeId; }
         public void setEdgeId(String edgeId) { this.edgeId = edgeId; }
         public String getExpression() { return expression; }
         public void setExpression(String expression) { this.expression = expression; }
         public boolean isDefault() { return isDefault; }
         public void setDefault(boolean aDefault) { isDefault = aDefault; }
+        public String getLanguage() { return language; }
+        public void setLanguage(String language) { this.language = language; }
     }
 
-    // --- Business Objects ---
     public static class BusinessObjects {
         private List<Definition> definitions = new ArrayList<>();
+
         // Getters e Setters
         public List<Definition> getDefinitions() { return definitions; }
         public void setDefinitions(List<Definition> definitions) { this.definitions = definitions; }
@@ -321,6 +307,7 @@ public class JsonReportV2 {
         private String typeId;
         private String typeName;
         private List<PropertyStructure> structure = new ArrayList<>();
+
         // Getters e Setters
         public String getTypeId() { return typeId; }
         public void setTypeId(String typeId) { this.typeId = typeId; }
@@ -334,6 +321,7 @@ public class JsonReportV2 {
         private String name;
         private String typeRef;
         private boolean list;
+
         // Getters e Setters
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -343,17 +331,14 @@ public class JsonReportV2 {
         public void setList(boolean list) { this.list = list; }
     }
 
-    // --- Execution Paths ---
     public static class ExecutionPath {
         private String artifactId;
         private String pathId;
         private List<String> steps = new ArrayList<>();
         private List<String> conditions = new ArrayList<>();
         private List<String> stepLabels = new ArrayList<>();
-        // Getters e Setters
-        public List<String> getStepLabels() { return stepLabels; }
-        public void setStepLabels(List<String> stepLabels) { this.stepLabels = stepLabels; }
 
+        // Getters e Setters
         public String getArtifactId() { return artifactId; }
         public void setArtifactId(String artifactId) { this.artifactId = artifactId; }
         public String getPathId() { return pathId; }
@@ -362,12 +347,14 @@ public class JsonReportV2 {
         public void setSteps(List<String> steps) { this.steps = steps; }
         public List<String> getConditions() { return conditions; }
         public void setConditions(List<String> conditions) { this.conditions = conditions; }
+        public List<String> getStepLabels() { return stepLabels; }
+        public void setStepLabels(List<String> stepLabels) { this.stepLabels = stepLabels; }
     }
 
-    // --- UI Report (ADICIONADO) ---
     public static class UiReport {
         private List<Coach> coaches = new ArrayList<>();
         private List<CoachView> coachViews = new ArrayList<>();
+
         // Getters e Setters
         public List<Coach> getCoaches() { return coaches; }
         public void setCoaches(List<Coach> coaches) { this.coaches = coaches; }
@@ -383,6 +370,7 @@ public class JsonReportV2 {
         private List<String> preExecutionScripts = new ArrayList<>();
         private List<BoundaryEvent> boundaryEvents = new ArrayList<>();
         private List<UiComponent> components = new ArrayList<>();
+
         // Getters e Setters
         public String getCoachId() { return coachId; }
         public void setCoachId(String coachId) { this.coachId = coachId; }
@@ -409,6 +397,7 @@ public class JsonReportV2 {
         private Map<String, String> events = new HashMap<>();
         private Map<String, String> configuration = new HashMap<>();
         private List<UiComponent> children = new ArrayList<>();
+
         // Getters e Setters
         public String getComponentId() { return componentId; }
         public void setComponentId(String componentId) { this.componentId = componentId; }
@@ -428,10 +417,39 @@ public class JsonReportV2 {
         public void setChildren(List<UiComponent> children) { this.children = children; }
     }
 
+    public static class RootView {
+        private String coachId;
+        private String coachName;
+        private List<View> views = new ArrayList<>();
+
+        // Getters e Setters
+        public String getCoachId() { return coachId; }
+        public void setCoachId(String coachId) { this.coachId = coachId; }
+        public String getCoachName() { return coachName; }
+        public void setCoachName(String coachName) { this.coachName = coachName; }
+        public List<View> getViews() { return views; }
+        public void setViews(List<View> views) { this.views = views; }
+    }
+
+    public static class View {
+        private String viewId;
+        private String viewName;
+        private List<InlineScript> inlineScripts = new ArrayList<>();
+
+        // Getters e Setters
+        public String getViewId() { return viewId; }
+        public void setViewId(String viewId) { this.viewId = viewId; }
+        public String getViewName() { return viewName; }
+        public void setViewName(String viewName) { this.viewName = viewName; }
+        public List<InlineScript> getInlineScripts() { return inlineScripts; }
+        public void setInlineScripts(List<InlineScript> inlineScripts) { this.inlineScripts = inlineScripts; }
+    }
+
     public static class BoundaryEvent {
         private String viewPath;
         private String eventLabel;
         private boolean firesValidation;
+
         // Getters e Setters
         public String getViewPath() { return viewPath; }
         public void setViewPath(String viewPath) { this.viewPath = viewPath; }
@@ -445,6 +463,7 @@ public class JsonReportV2 {
         private String id;
         private String name;
         private List<InlineScript> inlineScripts = new ArrayList<>();
+
         // Getters e Setters
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -458,6 +477,7 @@ public class JsonReportV2 {
         private String name;
         private String scriptType;
         private String scriptBlock;
+
         // Getters e Setters
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -465,5 +485,26 @@ public class JsonReportV2 {
         public void setScriptType(String scriptType) { this.scriptType = scriptType; }
         public String getScriptBlock() { return scriptBlock; }
         public void setScriptBlock(String scriptBlock) { this.scriptBlock = scriptBlock; }
+    }
+
+    public static class EnvironmentVariableUsage {
+        private String name; // Ex: "tw.env.GSCCOM_CURRENT_ENVIRONMENT"
+        private String value; // Ex: "DEV"
+
+        // Getters e Setters
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getValue() { return value; }
+        public void setValue(String value) { this.value = value; }
+    }
+    public static class ResourceBundleUsage {
+        private String key; // Ex: "tw.resource.MyGroup.myKey"
+        private String value; // Ex: "Meu Valor"
+
+        // Getters e Setters
+        public String getKey() { return key; }
+        public void setKey(String key) { this.key = key; }
+        public String getValue() { return value; }
+        public void setValue(String value) { this.value = value; }
     }
 }
