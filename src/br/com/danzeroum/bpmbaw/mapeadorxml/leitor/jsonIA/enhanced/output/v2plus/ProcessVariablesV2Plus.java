@@ -1,5 +1,7 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,14 @@ import java.util.List;
  * - Validação implementada
  */
 public class ProcessVariablesV2Plus {
+
+
+
+    @JsonProperty("typeRef")
+    private String typeRef;
+
+    @JsonProperty("cardinality")
+    private String cardinality;
 
     // CORRIGIDO: Usar tipo específico nas listas
     private List<ProcessDefinitionV2Plus.VariableDefinitionV2Plus> input;
@@ -32,6 +42,12 @@ public class ProcessVariablesV2Plus {
     // =========================================================================
     // GETTERS AND SETTERS - CORRIGIDOS
     // =========================================================================
+
+    public String getTypeRef() { return typeRef; }
+    public void setTypeRef(String typeRef) { this.typeRef = typeRef; }
+
+    public String getCardinality() { return cardinality; }
+    public void setCardinality(String cardinality) { this.cardinality = cardinality; }
 
     public List<ProcessDefinitionV2Plus.VariableDefinitionV2Plus> getInput() {
         return input != null ? input : new ArrayList<>();

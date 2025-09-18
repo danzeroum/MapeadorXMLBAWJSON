@@ -37,6 +37,8 @@ public class ProcessEdgeV2Plus {
     @JsonProperty("id")
     private String id;
 
+    @JsonProperty("conditionRef")
+    private String conditionRef;
     /**
      * ID do node de origem
      * OBRIGATÓRIO: Deve existir em graph.nodes[]
@@ -63,8 +65,6 @@ public class ProcessEdgeV2Plus {
      * SUBSTITUI: expression inline da V1/V2
      * FORMATO: cd:nomeCondicao (aponta para conditions[])
      */
-    @JsonProperty("conditionRef")
-    private String conditionRef;
 
     /**
      * 🆕 NOVO V2+: Tags de classificação de path
@@ -92,6 +92,7 @@ public class ProcessEdgeV2Plus {
      */
     @JsonProperty("properties")
     private Map<String, Object> properties;
+
 
     /**
      * Metadados de migração e roteamento

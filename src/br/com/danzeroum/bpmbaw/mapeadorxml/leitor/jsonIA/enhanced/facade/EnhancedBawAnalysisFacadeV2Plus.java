@@ -6,6 +6,7 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.Bpm
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusMasterExtractor;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusUIExtractor;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusVariablesExtractor;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.normalizers.GraphNormalizer;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Bpd;
@@ -118,7 +119,7 @@ public class EnhancedBawAnalysisFacadeV2Plus {
         return createMinimalBpdForAnalysis(processId);
     }
 
-
+/*
     private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
         System.out.println("🔧 Iniciando extração com orquestrador V2Plus...");
 
@@ -152,6 +153,74 @@ public class EnhancedBawAnalysisFacadeV2Plus {
 
         System.err.println("⚠️ Tipo de artefato não suportado para extração: " + mainArtifact.getClass().getName());
         return createMinimalDefinition();
+    }
+*/
+private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(
+        Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
+
+    // 1. Extrair estrutura base com o extrator mestre
+    TWXToV2PlusMasterExtractor masterExtractor = new TWXToV2PlusMasterExtractor(loader);
+    ProcessDefinitionV2Plus definition = masterExtractor.extractProcessDefinition(mainArtifact);
+
+    // 2. Normalizar o grafo (promover tipos e recalcular entry/end points)
+    GraphNormalizer graphNormalizer = new GraphNormalizer();
+    graphNormalizer.promoteCanonicalTypeToType(definition);
+    graphNormalizer.recomputeEntryAndEndPoints(definition);
+
+    // 3. Extrair, converter e anexar conditions a partir das arestas
+    ConditionAdapter condAdapter = new ConditionAdapter();
+    List<ConditionV2Plus> conditions = condAdapter.extractConditionsFromEdges(definition);
+    condAdapter.attachConditionRefs(definition, conditions);
+
+    // 4. Transformar mapeamentos de JS para CEL
+    MappingTransformer mappingTransformer = new MappingTransformer();
+    ProcessMappingsV2Plus mappings = mappingTransformer.consolidateFromFlow(mainArtifact);
+    definition.setMappings(mappings); // Anexa a estrutura de mapeamentos
+
+    // 5. Inferir e normalizar os tipos das variáveis para o formato typeRef
+    VariableInferer varInferer = new VariableInferer();
+    if (definition.getVariables() != null) {
+        normalizeVariableTypes(definition.getVariables(), varInferer);
+    }
+
+    return definition;
+}
+
+// NOVO MÉTODO AUXILIAR (ADICIONAR NO FINAL DA CLASSE):
+    /**
+     * Normaliza os tipos de todas as variáveis (input, output, private)
+     * na definição de processo, convertendo typeId para typeRef.
+     *
+     * @param vars O objeto que contém as definições de variáveis.
+     * @param inferer A instância do inferer para realizar o mapeamento.
+     */
+    private static void normalizeVariableTypes(VariablesDefinitionV2Plus vars, VariableInferer inferer) {
+        // Normalizar inputs
+        if (vars.getInput() != null) {
+            for (VariableV2Plus v : vars.getInput()) {
+                if (v.getTypeRef() == null && v.getTypeId() != null) {
+                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+            }
+        }
+
+        // Normalizar outputs
+        if (vars.getOutput() != null) {
+            for (VariableV2Plus v : vars.getOutput()) {
+                if (v.getTypeRef() == null && v.getTypeId() != null) {
+                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+            }
+        }
+
+        // Normalizar private
+        if (vars.getPrivate() != null) {
+            for (VariableV2Plus v : vars.getPrivate()) {
+                if (v.getTypeRef() == null && v.getTypeId() != null) {
+                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+            }
+        }
     }
 
     private static Bpd createBpdFromDefinitions(Definitions definitions) {

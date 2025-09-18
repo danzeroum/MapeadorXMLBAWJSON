@@ -25,6 +25,15 @@ public class ConditionV2Plus {
     @JsonProperty("description")
     private String description;
 
+    @JsonProperty("name")
+    private String name;
+
+    @JsonProperty("expression")
+    private String expression;
+
+    @JsonProperty("language")
+    private String language;
+
     // Construtores
     public ConditionV2Plus() {}
 
@@ -47,4 +56,28 @@ public class ConditionV2Plus {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getExpression() {
+        return expression;
+    }
+
+    public void setExpression(String expression) {
+        this.expression = expression;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
 }
