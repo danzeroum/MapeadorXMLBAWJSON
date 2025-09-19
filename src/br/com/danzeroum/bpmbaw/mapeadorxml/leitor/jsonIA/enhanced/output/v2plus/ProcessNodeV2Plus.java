@@ -4,298 +4,501 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
- * Process Node V2+ - Nó Individual IA-Friendly (Sem Scripts Inline)
+ * ProcessNodeV2Plus - Representa um nó no grafo de processo V2Plus
  *
- * ELIMINA PROBLEMAS V1/V2:
- * ❌ V1/V2: script inline nos nodes (não analisável pela IA)
- * ❌ V1/V2: tipos limitados e inconsistentes
- * ❌ V1/V2: metadados dispersos
- * ✅ V2+: logicRef para scripts externalizados
- * ✅ V2+: tipos BPMN 2.0 completos
- * ✅ V2+: metadados estruturados
+ * Esta classe representa todos os tipos de nós possíveis em um processo BPMN/BAW:
+ * - Eventos (Start, End, Intermediate)
+ * - Atividades (Task, SubProcess, UserTask, ScriptTask, etc.)
+ * - Gateways (Exclusive, Parallel, Inclusive, etc.)
+ * - Artefatos (DataObject, Annotation, etc.)
  *
- * CARACTERÍSTICAS V2+:
- * ✅ LogicRef obrigatório para scripts (sem inline)
- * ✅ Tipos BPMN 2.0 completos (StartEvent, UserTask, etc.)
- * ✅ Lane assignment explícito
- * ✅ Metadados de migração e proveniência
- * ✅ Validação de naming e estrutura
- * ✅ Suporte a propriedades customizadas
- *
- * @version 2.1.0
- * @since V2+ IA-Friendly Migration
+ * @version 3.0.0 - Versão completa Java 8
+ * @author Enhanced BAW Analysis System
  */
 @JsonPropertyOrder({
-        "id", "type", "name", "lane", "logicRef", "description", "properties", "metadata"
+        "id", "type", "name", "description", "lane", "pool",
+        "x", "y", "width", "height", "properties", "metadata",
+        "incoming", "outgoing", "attachedTo", "boundary"
 })
 public class ProcessNodeV2Plus {
 
+    // =========================================================================
+    // ENUMS
+    // =========================================================================
+
     /**
-     * ID único do node (estável entre versões)
-     * FORMATO: Compatível com IDs legados ou URN
+     * Tipos de nós suportados
      */
+    public enum NodeType {
+        // Eventos
+        START_EVENT("StartEvent"),
+        END_EVENT("EndEvent"),
+        INTERMEDIATE_EVENT("IntermediateEvent"),
+        BOUNDARY_EVENT("BoundaryEvent"),
+
+        // Tarefas
+        TASK("Task"),
+        USER_TASK("UserTask"),
+        SCRIPT("ScriptTask"),
+        SERVICE_TASK("ServiceTask"),
+        SEND_TASK("SendTask"),
+        RECEIVE_TASK("ReceiveTask"),
+        MANUAL_TASK("ManualTask"),
+        BUSINESS_RULE_TASK("BusinessRuleTask"),
+        SYSTEM_TASK("SystemTask"),
+
+        // Subprocessos
+        SUBPROCESS("SubProcess"),
+        CALL_ACTIVITY("CallActivity"),
+        AD_HOC_SUBPROCESS("AdHocSubProcess"),
+        TRANSACTION("Transaction"),
+        EVENT_SUBPROCESS("EventSubProcess"),
+
+        // Gateways
+        GATEWAY("ExclusiveGateway"),
+        EXCLUSIVE_GATEWAY("ExclusiveGateway"),
+        PARALLEL_GATEWAY("ParallelGateway"),
+        INCLUSIVE_GATEWAY("InclusiveGateway"),
+        COMPLEX_GATEWAY("ComplexGateway"),
+        EVENT_BASED_GATEWAY("EventBasedGateway"),
+
+        // Artefatos
+        DATA_OBJECT("DataObject"),
+        DATA_STORE("DataStore"),
+        ANNOTATION("TextAnnotation"),
+        GROUP("Group"),
+
+        // Pontos de controle
+        ENTRY_POINT("EntryPoint"),
+        EXIT_POINT("ExitPoint"),
+        STAY_ON_PAGE("StayOnPage"),
+
+        // Desconhecido
+        UNKNOWN("Unknown");
+
+        private final String bpmnName;
+
+        NodeType(String bpmnName) {
+            this.bpmnName = bpmnName;
+        }
+
+        public String getBpmnName() {
+            return bpmnName;
+        }
+
+        /**
+         * Converte string para enum
+         */
+        public static NodeType fromString(String type) {
+            if (type == null) return UNKNOWN;
+
+            // Tentar match direto
+            for (NodeType nt : values()) {
+                if (nt.name().equalsIgnoreCase(type) ||
+                        nt.bpmnName.equalsIgnoreCase(type)) {
+                    return nt;
+                }
+            }
+
+            // Tentar match parcial
+            String upper = type.toUpperCase();
+            if (upper.contains("START")) return START_EVENT;
+            if (upper.contains("END")) return END_EVENT;
+            if (upper.contains("USER")) return USER_TASK;
+            if (upper.contains("SCRIPT")) return SCRIPT;
+            if (upper.contains("SUBPROCESS")) return SUBPROCESS;
+            if (upper.contains("GATEWAY")) return GATEWAY;
+
+            return UNKNOWN;
+        }
+    }
+
+    // =========================================================================
+    // CAMPOS PRINCIPAIS
+    // =========================================================================
+
     @JsonProperty("id")
     private String id;
 
-    /**
-     * Tipo do node (BPMN 2.0 completo)
-     * EXPANDIDO: Suporte completo a todos os tipos BPMN
-     */
     @JsonProperty("type")
     private NodeType type;
 
-    /**
-     * Nome display do node
-     * VALIDADO: Não vazio, formato adequado
-     */
     @JsonProperty("name")
     private String name;
 
-    /**
-     * Lane/raia onde o node está localizado
-     * OPCIONAL: Para processos sem lanes
-     */
-    @JsonProperty("lane")
-    private String lane;
-
-    /**
-     * 🆕 NOVO V2+: Referência para lógica externalizada
-     * SUBSTITUI: campo script inline da V1/V2
-     * FORMATO: lg:nomeDoScript (aponta para logic.items[])
-     */
-    @JsonProperty("logicRef")
-    private String logicRef;
-
-    /**
-     * Descrição detalhada do node
-     * OBRIGATÓRIA: Para análise de IA
-     */
     @JsonProperty("description")
     private String description;
 
-    /**
-     * Propriedades customizadas do node
-     * FLEXÍVEL: Para dados específicos de diferentes tipos
-     */
+    // =========================================================================
+    // LOCALIZAÇÃO
+    // =========================================================================
+
+    @JsonProperty("lane")
+    private String lane;
+
+    @JsonProperty("pool")
+    private String pool;
+
+    @JsonProperty("x")
+    private Double x;
+
+    @JsonProperty("y")
+    private Double y;
+
+    @JsonProperty("width")
+    private Double width;
+
+    @JsonProperty("height")
+    private Double height;
+
+    // =========================================================================
+    // CONEXÕES
+    // =========================================================================
+
+    @JsonProperty("incoming")
+    private List<String> incoming;
+
+    @JsonProperty("outgoing")
+    private List<String> outgoing;
+
+    @JsonProperty("attachedTo")
+    private String attachedTo;
+
+    @JsonProperty("boundary")
+    private Boolean boundary;
+
+    // =========================================================================
+    // PROPRIEDADES E METADATA
+    // =========================================================================
+
     @JsonProperty("properties")
     private Map<String, Object> properties;
 
-    /**
-     * Metadados de migração e proveniência
-     */
     @JsonProperty("metadata")
-    private NodeMetadata metadata;
-    private boolean isEntryPoint;
-    private boolean isExitPoint;
+    private Map<String, Object> metadata;
 
-    // CORRIGIDO: Métodos para resolver erros setEntryPoint/setExitPoint
-    public boolean isEntryPoint() { return isEntryPoint; }
+    // =========================================================================
+    // CONSTRUCTORS
+    // =========================================================================
 
-    public void setIsEntryPoint(boolean entryPoint) {
-        this.isEntryPoint = entryPoint;
-        if (entryPoint && properties != null) {
-            properties.put("isEntry", true);
-        }
-    }
-
-    public boolean isExitPoint() { return isExitPoint; }
-
-    public void setIsExitPoint(boolean exitPoint) {
-        this.isExitPoint = exitPoint;
-        if (exitPoint && properties != null) {
-            properties.put("isExit", true);
-        }
-    }
     /**
-     * Tipos de node BPMN 2.0 completos + TWX específicos
+     * Constructor padrão
      */
-    public enum NodeType {
-        // BPMN 2.0 Events
-        START_EVENT("startEvent", "Evento de início"),
-        END_EVENT("endEvent", "Evento de fim"),
-        INTERMEDIATE_EVENT("intermediateEvent", "Evento intermediário"),
-        BOUNDARY_EVENT("boundaryEvent", "Evento de fronteira"),
-
-        // BPMN 2.0 Activities
-        TASK("task", "Tarefa genérica"),
-        USER_TASK("userTask", "Tarefa de usuário"),
-        SCRIPT_TASK("scriptTask", "Tarefa de script"),
-        SERVICE_TASK("serviceTask", "Tarefa de serviço"),
-        SEND_TASK("sendTask", "Tarefa de envio"),
-        RECEIVE_TASK("receiveTask", "Tarefa de recebimento"),
-        MANUAL_TASK("manualTask", "Tarefa manual"),
-        BUSINESS_RULE_TASK("businessRuleTask", "Tarefa de regra de negócio"),
-
-        // BPMN 2.0 Gateways
-        EXCLUSIVE_GATEWAY("exclusiveGateway", "Gateway exclusivo"),
-        PARALLEL_GATEWAY("parallelGateway", "Gateway paralelo"),
-        INCLUSIVE_GATEWAY("inclusiveGateway", "Gateway inclusivo"),
-        COMPLEX_GATEWAY("complexGateway", "Gateway complexo"),
-        EVENT_BASED_GATEWAY("eventBasedGateway", "Gateway baseado em evento"),
-
-        // BPMN 2.0 Sub-processes
-        SUB_PROCESS("subProcess", "Sub-processo"),
-        CALL_ACTIVITY("callActivity", "Atividade de chamada"),
-
-        // TWX/BAW Específicos (mantidos para compatibilidade)
-        COACH_NG("coachNG", "Interface de usuário TWX"),
-        DECISION("decision", "Ponto de decisão TWX"),
-        SWITCH("switch", "Switch TWX"),
-
-        // Genérico para casos não mapeados
-        UNKNOWN("unknown", "Tipo não identificado");
-
-        private final String bpmnName;
-        private final String description;
-
-        NodeType(String bpmnName, String description) {
-            this.bpmnName = bpmnName;
-            this.description = description;
-        }
-
-        public String getBpmnName() { return bpmnName; }
-        public String getDescription() { return description; }
-
-        /**
-         * Converte string legada para NodeType
-         */
-        public static NodeType fromString(String typeStr) {
-            if (typeStr == null) return UNKNOWN;
-
-            // Mapeamentos diretos
-            switch (typeStr.toLowerCase()) {
-                case "startevent":
-                case "start":
-                    return START_EVENT;
-                case "endevent":
-                case "end":
-                case "exitpoint":
-                    return END_EVENT;
-                case "script":
-                case "scripttask":
-                    return SCRIPT_TASK;
-                case "usertask":
-                case "humantask":
-                case "coachng":
-                    return USER_TASK;
-                case "servicetask":
-                case "service":
-                    return SERVICE_TASK;
-                case "subprocess":
-                case "subprocesstask":
-                    return SUB_PROCESS;
-                case "callactivity":
-                case "calledprocess":
-                    return CALL_ACTIVITY;
-                case "exclusivegateway":
-                case "decision":
-                case "switch":
-                    return EXCLUSIVE_GATEWAY;
-                case "parallelgateway":
-                    return PARALLEL_GATEWAY;
-                case "task":
-                case "activity":
-                default:
-                    return TASK;
-            }
-        }
-
-        /**
-         * Verifica se o tipo requer logicRef
-         */
-        public boolean requiresLogic() {
-            return this == SCRIPT_TASK || this == SERVICE_TASK || this == BUSINESS_RULE_TASK;
-        }
-
-        /**
-         * Verifica se o tipo é um gateway
-         */
-        public boolean isGateway() {
-            return name().contains("GATEWAY");
-        }
-
-        /**
-         * Verifica se o tipo é um evento
-         */
-        public boolean isEvent() {
-            return name().contains("EVENT");
-        }
-    }
-
-    // =========================================================================
-    // CONSTRUTORES
-    // =========================================================================
-
     public ProcessNodeV2Plus() {
-        this.type = NodeType.TASK;
-        this.properties = new HashMap<>();
-        this.metadata = new NodeMetadata();
+        this.type = NodeType.UNKNOWN;
+        this.incoming = new ArrayList<String>();
+        this.outgoing = new ArrayList<String>();
+        this.properties = new HashMap<String, Object>();
+        this.metadata = new HashMap<String, Object>();
+        this.boundary = false;
     }
 
     /**
-     * Construtor completo para criação rápida
+     * Constructor com id e tipo
      */
-    public ProcessNodeV2Plus(String id, NodeType type, String name, String lane) {
+    public ProcessNodeV2Plus(String id, NodeType type) {
         this();
         this.id = id;
-        this.type = type != null ? type : NodeType.TASK;
+        this.type = type;
+    }
+
+    /**
+     * Constructor completo
+     */
+    public ProcessNodeV2Plus(String id, NodeType type, String name, String lane) {
+        this(id, type);
         this.name = name;
         this.lane = lane;
+    }
 
-        // Validar após construção
-        if (!isBasicValid()) {
-            throw new IllegalArgumentException("Invalid node: " + getValidationErrors());
+    // =========================================================================
+    // GETTERS E SETTERS
+    // =========================================================================
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public NodeType getType() {
+        return type;
+    }
+
+    public void setType(NodeType type) {
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLane() {
+        return lane;
+    }
+
+    public void setLane(String lane) {
+        this.lane = lane;
+    }
+
+    public String getPool() {
+        return pool;
+    }
+
+    public void setPool(String pool) {
+        this.pool = pool;
+    }
+
+    public Double getX() {
+        return x;
+    }
+
+    public void setX(Double x) {
+        this.x = x;
+    }
+
+    public Double getY() {
+        return y;
+    }
+
+    public void setY(Double y) {
+        this.y = y;
+    }
+
+    public Double getWidth() {
+        return width;
+    }
+
+    public void setWidth(Double width) {
+        this.width = width;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
+    }
+
+    public List<String> getIncoming() {
+        if (incoming == null) {
+            incoming = new ArrayList<String>();
+        }
+        return incoming;
+    }
+
+    public void setIncoming(List<String> incoming) {
+        this.incoming = incoming;
+    }
+
+    public List<String> getOutgoing() {
+        if (outgoing == null) {
+            outgoing = new ArrayList<String>();
+        }
+        return outgoing;
+    }
+
+    public void setOutgoing(List<String> outgoing) {
+        this.outgoing = outgoing;
+    }
+
+    public String getAttachedTo() {
+        return attachedTo;
+    }
+
+    public void setAttachedTo(String attachedTo) {
+        this.attachedTo = attachedTo;
+    }
+
+    public Boolean getBoundary() {
+        return boundary;
+    }
+
+    public void setBoundary(Boolean boundary) {
+        this.boundary = boundary;
+    }
+
+    public Map<String, Object> getProperties() {
+        if (properties == null) {
+            properties = new HashMap<String, Object>();
+        }
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
+    public Map<String, Object> getMetadata() {
+        if (metadata == null) {
+            metadata = new HashMap<String, Object>();
+        }
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+    // =========================================================================
+    // MÉTODOS DE NEGÓCIO
+    // =========================================================================
+
+    /**
+     * Adiciona conexão de entrada
+     */
+    public void addIncoming(String edgeId) {
+        if (edgeId != null && !edgeId.isEmpty()) {
+            getIncoming().add(edgeId);
         }
     }
 
     /**
-     * Factory method para criar node a partir de dados V1/V2
+     * Adiciona conexão de saída
      */
-    public static ProcessNodeV2Plus fromLegacy(String id, String name, String typeStr, String lane, String script) {
-        ProcessNodeV2Plus node = new ProcessNodeV2Plus();
-
-        // Configurar campos básicos
-        node.id = normalizeNodeId(id);
-        node.name = name != null ? name : "Unnamed Node";
-        node.type = NodeType.fromString(typeStr);
-        node.lane = lane;
-
-        // Se há script, será externalizado (não inline)
-        if (script != null && !script.trim().isEmpty()) {
-            // LogicRef será definido durante migração
-            node.description = "Node with externalized script logic";
-            node.metadata.hasLegacyScript = true;
-            node.metadata.legacyScriptLength = script.length();
-        } else {
-            node.description = "Node without script logic";
+    public void addOutgoing(String edgeId) {
+        if (edgeId != null && !edgeId.isEmpty()) {
+            getOutgoing().add(edgeId);
         }
-
-        // Metadados de migração
-        node.metadata.sourceVersion = "1.0";
-        node.metadata.originalType = typeStr;
-        node.metadata.migrationTimestamp = java.time.Instant.now().toString();
-
-        return node;
     }
 
     /**
-     * Normaliza ID de node para formato consistente
+     * Adiciona propriedade
      */
-    private static String normalizeNodeId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            return "node-" + System.currentTimeMillis();
-        }
+    public void addProperty(String key, Object value) {
+        getProperties().put(key, value);
+    }
 
-        // Manter formato existente se válido
-        if (id.matches("^[a-zA-Z0-9._-]+$")) {
-            return id;
-        }
+    /**
+     * Obtém propriedade
+     */
+    public Object getProperty(String key) {
+        return getProperties().get(key);
+    }
 
-        // Limpar caracteres inválidos
-        return id.replaceAll("[^a-zA-Z0-9._-]", "_");
+    /**
+     * Adiciona metadata
+     */
+    public void addMetadata(String key, Object value) {
+        getMetadata().put(key, value);
+    }
+
+    /**
+     * Verifica se é um evento
+     */
+    public boolean isEvent() {
+        return type == NodeType.START_EVENT ||
+                type == NodeType.END_EVENT ||
+                type == NodeType.INTERMEDIATE_EVENT ||
+                type == NodeType.BOUNDARY_EVENT;
+    }
+
+    /**
+     * Verifica se é uma tarefa
+     */
+    public boolean isTask() {
+        return type.name().contains("TASK") || type == NodeType.SCRIPT;
+    }
+
+    /**
+     * Verifica se é um gateway
+     */
+    public boolean isGateway() {
+        return type.name().contains("GATEWAY");
+    }
+
+    /**
+     * Verifica se é um subprocess
+     */
+    public boolean isSubprocess() {
+        return type == NodeType.SUBPROCESS ||
+                type == NodeType.CALL_ACTIVITY ||
+                type == NodeType.AD_HOC_SUBPROCESS ||
+                type == NodeType.TRANSACTION ||
+                type == NodeType.EVENT_SUBPROCESS;
+    }
+
+    /**
+     * Verifica se é um nó de início
+     */
+    public boolean isStartNode() {
+        return type == NodeType.START_EVENT || type == NodeType.ENTRY_POINT;
+    }
+
+    /**
+     * Verifica se é um nó de fim
+     */
+    public boolean isEndNode() {
+        return type == NodeType.END_EVENT || type == NodeType.EXIT_POINT;
+    }
+
+    /**
+     * Calcula o centro do nó
+     */
+    public double getCenterX() {
+        if (x != null && width != null) {
+            return x + (width / 2);
+        }
+        return x != null ? x : 0;
+    }
+
+    public double getCenterY() {
+        if (y != null && height != null) {
+            return y + (height / 2);
+        }
+        return y != null ? y : 0;
+    }
+
+    /**
+     * Define posição do nó
+     */
+    public void setPosition(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Define dimensões do nó
+     */
+    public void setDimensions(double width, double height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    /**
+     * Obtém tipo canônico como string
+     */
+    public String getCanonicalType() {
+        if (properties != null && properties.containsKey("canonicalType")) {
+            return properties.get("canonicalType").toString();
+        }
+        return type.getBpmnName();
+    }
+
+    /**
+     * Define tipo canônico
+     */
+    public void setCanonicalType(String canonicalType) {
+        addProperty("canonicalType", canonicalType);
     }
 
     // =========================================================================
@@ -303,384 +506,129 @@ public class ProcessNodeV2Plus {
     // =========================================================================
 
     /**
-     * Validação completa do node
+     * Valida se o nó está configurado corretamente
      */
-    public boolean isValid() {
-        return getValidationErrors().isEmpty();
-    }
-
-    /**
-     * Validação básica (usado no construtor)
-     */
-    private boolean isBasicValid() {
-        return id != null && !id.trim().isEmpty() &&
-                name != null && !name.trim().isEmpty() &&
-                type != null;
-    }
-
-    /**
-     * Lista todos os erros de validação
-     */
-    public String getValidationErrors() {
-        StringBuilder errors = new StringBuilder();
-
-        // 1. ID obrigatório e válido
+    public boolean validate() {
+        // ID é obrigatório
         if (id == null || id.trim().isEmpty()) {
-            errors.append("ID cannot be null or empty. ");
-        } else if (!isValidNodeId(id)) {
-            errors.append("ID must contain only letters, numbers, dots, underscores, and hyphens. ");
+            return false;
         }
 
-        // 2. Nome obrigatório
+        // Tipo não pode ser UNKNOWN
+        if (type == null || type == NodeType.UNKNOWN) {
+            return false;
+        }
+
+        // Nome é recomendado mas não obrigatório
         if (name == null || name.trim().isEmpty()) {
-            errors.append("Name cannot be null or empty. ");
-        } else if (name.trim().length() < 2) {
-            errors.append("Name must be at least 2 characters. ");
+            // Gerar nome padrão baseado no tipo
+            name = type.getBpmnName() + "_" + id;
         }
 
-        // 3. Tipo obrigatório
-        if (type == null) {
-            errors.append("Type cannot be null. ");
-        } else {
-            // Validar se tipo que requer lógica tem logicRef
-            if (type.requiresLogic() && (logicRef == null || logicRef.trim().isEmpty())) {
-                errors.append("Type " + type + " requires logicRef. ");
-            }
-        }
-
-        // 4. LogicRef format (se presente)
-        if (logicRef != null && !logicRef.trim().isEmpty() && !isValidLogicRef(logicRef)) {
-            errors.append("LogicRef must follow format 'lg:scriptName'. ");
-        }
-
-        // 5. Descrição obrigatória para IA
-        if (description == null || description.trim().isEmpty()) {
-            errors.append("Description is required for IA analysis. ");
-        }
-
-        return errors.toString().trim();
+        return true;
     }
 
     /**
-     * Valida formato do ID do node
+     * Obtém erros de validação
      */
-    private boolean isValidNodeId(String id) {
-        return id != null && id.matches("^[a-zA-Z0-9._-]+$");
-    }
+    public List<String> getValidationErrors() {
+        List<String> errors = new ArrayList<String>();
 
-    /**
-     * Valida formato do logicRef
-     */
-    private boolean isValidLogicRef(String logicRef) {
-        return logicRef != null && logicRef.matches("^lg:[a-zA-Z0-9_-]+$");
+        if (id == null || id.trim().isEmpty()) {
+            errors.add("Node ID is required");
+        }
+
+        if (type == null || type == NodeType.UNKNOWN) {
+            errors.add("Node type is invalid or unknown");
+        }
+
+        // Validações específicas por tipo
+        if (isGateway() && (getOutgoing().size() < 2)) {
+            errors.add("Gateway must have at least 2 outgoing edges");
+        }
+
+        if (isStartNode() && !getIncoming().isEmpty()) {
+            errors.add("Start node should not have incoming edges");
+        }
+
+        if (isEndNode() && !getOutgoing().isEmpty()) {
+            errors.add("End node should not have outgoing edges");
+        }
+
+        return errors;
     }
 
     // =========================================================================
-    // LÓGICA EXTERNALIZADA (V2+ CORE FEATURE)
+    // CLONAGEM
     // =========================================================================
 
     /**
-     * 🆕 Associa script externalizado ao node
-     * SUBSTITUI: script inline da V1/V2
-     */
-    public void setExternalizedLogic(String logicId, String description) {
-        if (logicId == null || logicId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Logic ID cannot be null or empty");
-        }
-
-        // Formato padrão: lg:nomeDoScript
-        if (!logicId.startsWith("lg:")) {
-            logicId = "lg:" + logicId;
-        }
-
-        this.logicRef = logicId;
-
-        if (description != null && !description.trim().isEmpty()) {
-            this.description = description;
-        }
-
-        // Marcar que tem lógica externalizada
-        this.metadata.hasExternalizedLogic = true;
-    }
-
-    /**
-     * Verifica se node tem lógica externalizada
-     */
-    public boolean hasExternalizedLogic() {
-        return logicRef != null && !logicRef.trim().isEmpty();
-    }
-
-    /**
-     * Remove referência de lógica (para nodes simples)
-     */
-    public void clearLogic() {
-        this.logicRef = null;
-        this.metadata.hasExternalizedLogic = false;
-    }
-
-    // =========================================================================
-    // PROPRIEDADES CUSTOMIZADAS
-    // =========================================================================
-
-    /**
-     * Adiciona propriedade customizada
-     */
-    public void setProperty(String key, Object value) {
-        if (key == null || key.trim().isEmpty()) {
-            throw new IllegalArgumentException("Property key cannot be null or empty");
-        }
-        properties.put(key, value);
-    }
-
-    /**
-     * Obtém propriedade customizada
-     */
-    public Object getProperty(String key) {
-        return properties.get(key);
-    }
-
-    /**
-     * Obtém propriedade como string
-     */
-    public String getPropertyAsString(String key) {
-        Object value = properties.get(key);
-        return value != null ? value.toString() : null;
-    }
-
-    /**
-     * Verifica se tem propriedade
-     */
-    public boolean hasProperty(String key) {
-        return properties.containsKey(key);
-    }
-
-    // =========================================================================
-    // ANÁLISE E CLASSIFICAÇÃO
-    // =========================================================================
-
-    /**
-     * Verifica se é um node de entrada (sem predecessores)
-     */
-    public boolean isEntryNode() {
-        return type == NodeType.START_EVENT ||
-                (type == NodeType.TASK && properties.containsKey("isEntry"));
-    }
-
-    /**
-     * Verifica se é um node de saída (sem sucessores)
-     */
-    public boolean isExitNode() {
-        return type == NodeType.END_EVENT ||
-                (type == NodeType.TASK && properties.containsKey("isExit"));
-    }
-
-    /**
-     * Verifica se é um node de decisão
-     */
-    public boolean isDecisionNode() {
-        return type.isGateway() || type == NodeType.DECISION || type == NodeType.SWITCH;
-    }
-
-    /**
-     * Verifica se é um node automatizado (sem interação humana)
-     */
-    public boolean isAutomated() {
-        return type == NodeType.SCRIPT_TASK ||
-                type == NodeType.SERVICE_TASK ||
-                type == NodeType.BUSINESS_RULE_TASK;
-    }
-
-    /**
-     * Obtém nível de complexidade estimado
-     */
-    public int getComplexityLevel() {
-        int complexity = 1; // Base
-
-        if (hasExternalizedLogic()) complexity += 2;
-        if (isDecisionNode()) complexity += 2;
-        if (type.isGateway()) complexity += 1;
-        if (properties.size() > 3) complexity += 1;
-
-        return Math.min(complexity, 5); // Max 5
-    }
-
-    // =========================================================================
-    // CLONAGEM E COMPARAÇÃO
-    // =========================================================================
-
-    /**
-     * Clona o node para novo contexto
+     * Clona o nó
      */
     public ProcessNodeV2Plus clone() {
-        ProcessNodeV2Plus cloned = new ProcessNodeV2Plus();
-        cloned.id = this.id;
-        cloned.type = this.type;
-        cloned.name = this.name;
-        cloned.lane = this.lane;
-        cloned.logicRef = this.logicRef;
-        cloned.description = this.description;
+        ProcessNodeV2Plus clone = new ProcessNodeV2Plus();
+        clone.id = this.id;
+        clone.type = this.type;
+        clone.name = this.name;
+        clone.description = this.description;
+        clone.lane = this.lane;
+        clone.pool = this.pool;
+        clone.x = this.x;
+        clone.y = this.y;
+        clone.width = this.width;
+        clone.height = this.height;
+        clone.attachedTo = this.attachedTo;
+        clone.boundary = this.boundary;
 
-        // Clonar properties
-        cloned.properties = new HashMap<>(this.properties);
-
-        // Clonar metadata
+        if (this.incoming != null) {
+            clone.incoming = new ArrayList<String>(this.incoming);
+        }
+        if (this.outgoing != null) {
+            clone.outgoing = new ArrayList<String>(this.outgoing);
+        }
+        if (this.properties != null) {
+            clone.properties = new HashMap<String, Object>(this.properties);
+        }
         if (this.metadata != null) {
-            cloned.metadata = new NodeMetadata();
-            cloned.metadata.sourceVersion = this.metadata.sourceVersion;
-            cloned.metadata.originalType = this.metadata.originalType;
-            cloned.metadata.hasLegacyScript = this.metadata.hasLegacyScript;
-            cloned.metadata.hasExternalizedLogic = this.metadata.hasExternalizedLogic;
-            cloned.metadata.migrationTimestamp = this.metadata.migrationTimestamp;
+            clone.metadata = new HashMap<String, Object>(this.metadata);
         }
 
-        return cloned;
+        return clone;
+    }
+
+    // =========================================================================
+    // MÉTODOS UTILITÁRIOS
+    // =========================================================================
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ProcessNodeV2Plus{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", type=").append(type);
+        sb.append(", name='").append(name).append('\'');
+        if (lane != null) sb.append(", lane='").append(lane).append('\'');
+        if (x != null && y != null) {
+            sb.append(", pos=(").append(x).append(",").append(y).append(")");
+        }
+        sb.append(", in=").append(getIncoming().size());
+        sb.append(", out=").append(getOutgoing().size());
+        sb.append('}');
+        return sb.toString();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         ProcessNodeV2Plus that = (ProcessNodeV2Plus) o;
-        return Objects.equals(id, that.id);
+
+        return id != null ? id.equals(that.id) : that.id == null;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Node{id='%s', type=%s, name='%s', hasLogic=%s}",
-                id, type, name, hasExternalizedLogic());
-    }
-
-    // =========================================================================
-    // GETTERS AND SETTERS
-    // =========================================================================
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public NodeType getType() { return type; }
-    public void setType(NodeType type) { this.type = type; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getLane() { return lane; }
-    public void setLane(String lane) { this.lane = lane; }
-
-    public String getLogicRef() { return logicRef; }
-    public void setLogicRef(String logicRef) { this.logicRef = logicRef; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public Map<String, Object> getProperties() { return properties; }
-    public void setProperties(Map<String, Object> properties) {
-        this.properties = properties != null ? properties : new HashMap<>();
-    }
-
-    public NodeMetadata getMetadata() { return metadata; }
-    public void setMetadata(NodeMetadata metadata) { this.metadata = metadata; }
-
-    // =========================================================================
-    // CLASSES DE APOIO
-    // =========================================================================
-
-    /**
-     * Metadados de migração e proveniência do node
-     */
-    public static class NodeMetadata {
-        public String sourceVersion;           // "1.0", "2.0"
-        public String originalType;            // "Script", "CoachNG", etc.
-        public boolean hasLegacyScript;        // true se tinha script inline
-        public int legacyScriptLength;         // tamanho do script original
-        public boolean hasExternalizedLogic;   // true se tem logicRef
-        public String migrationTimestamp;      // timestamp da migração
-        public String migrationReason;         // razão da migração
-        public Map<String, String> annotations;
-        public NodeMetadata() {
-            this.annotations = new HashMap<String, String>();
-            this.migrationTimestamp = java.time.LocalDateTime.now().toString();
-        }
-
-        @Override
-        public String toString() {
-            return String.format("NodeMetadata{source=%s, originalType=%s, hasScript=%s, hasLogic=%s}",
-                    sourceVersion, originalType, hasLegacyScript, hasExternalizedLogic);
-        }
-
-        public String getSourceVersion() { return sourceVersion; }
-        public void setSourceVersion(String sourceVersion) { this.sourceVersion = sourceVersion; }
-
-        public String getOriginalType() { return originalType; }
-        public void setOriginalType(String originalType) { this.originalType = originalType; }
-
-        public boolean isHasLegacyScript() { return hasLegacyScript; }
-        public void setHasLegacyScript(boolean hasLegacyScript) { this.hasLegacyScript = hasLegacyScript; }
-
-        public boolean isHasExternalizedLogic() { return hasExternalizedLogic; }
-        public void setHasExternalizedLogic(boolean hasExternalizedLogic) { this.hasExternalizedLogic = hasExternalizedLogic; }
-
-    }
-
-    // =========================================================================
-    // TESTE INLINE RÁPIDO
-    // =========================================================================
-
-    /**
-     * Teste básico para validação durante desenvolvimento
-     */
-    public static void main(String[] args) {
-        System.out.println("🧪 Testing ProcessNodeV2Plus...");
-
-        try {
-            // Teste 1: Criação básica
-            ProcessNodeV2Plus node1 = new ProcessNodeV2Plus("node1", NodeType.SCRIPT_TASK, "Validar Dados", "operacoes");
-            System.out.println("✅ Basic creation: " + node1.isValid());
-
-            // Teste 2: Migração de legacy
-            ProcessNodeV2Plus node2 = ProcessNodeV2Plus.fromLegacy(
-                    "2025.abc123", "Script Node", "Script", "lane1",
-                    "tw.local.validate = new tw.object.CoachValidation();"
-            );
-            System.out.println("✅ Legacy migration: " + node2.getMetadata().hasLegacyScript);
-
-            // Teste 3: Lógica externalizada
-            node1.setExternalizedLogic("validar_dados_script", "Script para validação de dados de entrada");
-            System.out.println("✅ Externalized logic: " + node1.hasExternalizedLogic());
-
-            // Teste 4: Propriedades customizadas
-            node1.setProperty("timeout", 30000);
-            node1.setProperty("retryCount", 3);
-            System.out.println("✅ Custom properties: " + node1.getProperty("timeout"));
-
-            // Teste 5: Classificação
-            System.out.println("✅ Is automated: " + node1.isAutomated());
-            System.out.println("✅ Is decision: " + node1.isDecisionNode());
-            System.out.println("✅ Complexity level: " + node1.getComplexityLevel());
-
-            // Teste 6: Conversão de tipos
-            NodeType convertedType = NodeType.fromString("CoachNG");
-            System.out.println("✅ Type conversion: " + (convertedType == NodeType.USER_TASK));
-
-            // Teste 7: Validação
-            ProcessNodeV2Plus invalidNode = new ProcessNodeV2Plus();
-            invalidNode.setId(""); // ID vazio
-            System.out.println("✅ Invalid node detection: " + !invalidNode.isValid());
-
-            // Teste 8: Clonagem
-            ProcessNodeV2Plus cloned = node1.clone();
-            System.out.println("✅ Cloning: " + cloned.equals(node1));
-
-            System.out.println("\n🎉 ProcessNodeV2Plus: ALL TESTS PASSED!");
-            System.out.println("Sample node: " + node1);
-
-        } catch (Exception e) {
-            System.err.println("❌ Test failed: " + e.getMessage());
-            e.printStackTrace();
-        }
+        return id != null ? id.hashCode() : 0;
     }
 }
