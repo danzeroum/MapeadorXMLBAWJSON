@@ -16,10 +16,6 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade.EnhancedBawAnalysisFacadeV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.*;
 
 public class BawAnalysisIntegrationTestV2PlusComplete {

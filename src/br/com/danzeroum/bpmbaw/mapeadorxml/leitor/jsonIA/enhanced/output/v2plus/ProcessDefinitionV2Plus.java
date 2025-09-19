@@ -95,9 +95,9 @@ public class ProcessDefinitionV2Plus {
     public ProcessDefinitionStats getStats() {
         ProcessDefinitionStats stats = new ProcessDefinitionStats();
         if (variables != null) {
-            stats.inputVariables = variables.getInput().size();
-            stats.outputVariables = variables.getOutput().size();
-            stats.privateVariables = variables.getPrivateVars().size();
+            stats.inputVariables = variables.getInputVariables().size();
+            stats.outputVariables = variables.getOutputVariables().size();
+            stats.privateVariables = variables.getPrivateVariables().size();;
         }
         if (graph != null) {
             stats.nodeCount = graph.getNodes() != null ? graph.getNodes().size() : 0;

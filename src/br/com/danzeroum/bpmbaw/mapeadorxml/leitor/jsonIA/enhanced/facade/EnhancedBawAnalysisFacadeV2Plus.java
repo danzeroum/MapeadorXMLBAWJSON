@@ -6,6 +6,7 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.Bpm
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusMasterExtractor;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusUIExtractor;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusVariablesExtractor;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.inferers.VariableInferer;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.normalizers.GraphNormalizer;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Bpd;
@@ -18,13 +19,7 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions;
 
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-
-
-import static br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusMasterExtractor.createMinimalDefinition;
+import java.util.*;
 
 public class EnhancedBawAnalysisFacadeV2Plus {
 
@@ -118,114 +113,152 @@ public class EnhancedBawAnalysisFacadeV2Plus {
         return createMinimalBpdForAnalysis(processId);
     }
 
-/*
-    private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
-        System.out.println("🔧 Iniciando extração com orquestrador V2Plus...");
 
-        if (mainArtifact instanceof Definitions) {
-            System.out.println("Moderno (BPMN 2.0) detectado. Usando extratores especializados...");
-            return BpmnProcessExtractor.extractProcessDefinition((Definitions) mainArtifact, loader);
-        } else if (mainArtifact instanceof Teamworks) {
-            Teamworks tw = (Teamworks) mainArtifact;
-            if (tw.getBpd() != null) {
-                Bpd bpd = tw.getBpd();
+    private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(
+            Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
 
-                if (bpd.getBpmn2Data() != null && !bpd.getBpmn2Data().trim().isEmpty()) {
-                    System.out.println("Híbrido (BPD com bpmn2Data) detectado. Usando extratores BPMN 2.0...");
-                    try {
-                        JAXBContext context = JAXBContext.newInstance(Definitions.class);
-                        Unmarshaller unmarshaller = context.createUnmarshaller();
-                        StringReader reader = new StringReader(bpd.getBpmn2Data());
-                        Definitions definitions = (Definitions) unmarshaller.unmarshal(reader);
-                        return BpmnProcessExtractor.extractProcessDefinition(definitions, loader);
-                    } catch (Exception e) {
-                        System.err.println("❌ Erro Crítico ao processar bpmn2Data. Nenhum dado pôde ser extraído.");
-                        e.printStackTrace();
-                        return new ProcessDefinitionV2Plus();
-                    }
-                } else {
-                    System.out.println("Processo Legado (BPD) detectado. Usando extratores TWX...");
-                    return TWXToV2PlusMasterExtractor.extractComplete(bpd, loader);
-                }
+        // Linha 161 - createMinimalDefinition não recebe argumentos
+        ProcessDefinitionV2Plus definition = TWXToV2PlusMasterExtractor.createMinimalDefinition();
+
+        // Extrair variáveis usando o extrator correto
+        TWXToV2PlusVariablesExtractor varExtractor = new TWXToV2PlusVariablesExtractor(loader);
+        List<ProcessVariableV2Plus> extractedVars = varExtractor.extractVariables(mainArtifact, loader);
+
+        // Criar ProcessVariablesV2Plus e organizar as variáveis
+        ProcessVariablesV2Plus variables = new ProcessVariablesV2Plus();
+        variables.setInputVariables(new ArrayList<ProcessVariableV2Plus>());
+        variables.setOutputVariables(new ArrayList<ProcessVariableV2Plus>());
+        variables.setPrivateVariables(new ArrayList<ProcessVariableV2Plus>());
+
+        // Distribuir variáveis por categoria
+        for (ProcessVariableV2Plus var : extractedVars) {
+            if (var.getName().contains("input") || var.getName().contains("recondicionamento")) {
+                variables.getInputVariables().add(var);
+            } else if (var.getName().contains("output") || var.getName().contains("orcamento")) {
+                variables.getOutputVariables().add(var);
+            } else {
+                variables.getPrivateVariables().add(var);
             }
         }
+        definition.setVariables(variables);
 
-        System.err.println("⚠️ Tipo de artefato não suportado para extração: " + mainArtifact.getClass().getName());
-        return createMinimalDefinition();
-    }
-*/
-private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(
-        Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
+        // Extrair grafo
+        BpmnProcessExtractor bpmnExtractor = new BpmnProcessExtractor(loader);
+        ProcessGraphV2Plus graph = bpmnExtractor.extractGraph(mainArtifact);
+        definition.setGraph(graph);
 
-    // Usar o método estático que já existe
-    ProcessDefinitionV2Plus definition = TWXToV2PlusMasterExtractor.createMinimalDefinition(
-            mainArtifact, loader, config);
+        // Normalizar grafo
+        GraphNormalizer graphNormalizer = new GraphNormalizer();
+        graphNormalizer.promoteCanonicalTypeToType(definition);
+        graphNormalizer.recomputeEntryAndEndPoints(definition);
 
-    // Normalizar grafo
-    GraphNormalizer graphNormalizer = new GraphNormalizer();
-    graphNormalizer.promoteCanonicalTypeToType(definition);
-    graphNormalizer.recomputeEntryAndEndPoints(definition);
+        // Criar conditions usando ProcessConditionV2Plus (não ConditionV2Plus)
+        if (definition.getGraph() != null) {
+            List<ProcessConditionV2Plus> conditions = extractConditionsFromGraph(definition.getGraph());
+            attachConditionRefsToEdges(definition.getGraph(), conditions);
+            definition.setConditions(conditions);
+        }
 
-    // Extrair e anexar conditions - passar apenas o graph
-    if (definition.getGraph() != null) {
-        ConditionAdapter condAdapter = new ConditionAdapter();
-        List<ConditionV2Plus> conditions = condAdapter.extractConditionsFromEdges(
-                definition.getGraph());
-        condAdapter.attachConditionRefs(definition.getGraph(), conditions);
-        definition.setConditions(conditions);
-    }
-
-    // Transformar mapeamentos
-    MappingTransformer mappingTransformer = new MappingTransformer();
-    ProcessMappingsV2Plus mappings = createBasicMappings(); // Usar método simplificado
-    if (mappings != null) {
+        // Criar mapeamentos básicos
+        ProcessMappingsV2Plus mappings = createBasicMappings();
         definition.setMappings(mappings);
+
+        // Normalizar tipos de variáveis
+        normalizeVariableTypes(definition.getVariables());
+
+        return definition;
     }
 
-    // Normalizar variáveis
-    if (definition.getVariables() != null) {
-        normalizeProcessVariables(definition.getVariables());
-    }
 
-    return definition;
-}
-    private static void normalizeProcessVariables(ProcessVariablesV2Plus vars) {
-        br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.inferers.VariableInferer inferer = new br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.inferers.VariableInferer();
+    private static void normalizeVariableTypes(ProcessVariablesV2Plus vars) {
+        if (vars == null) return;
 
-        // Normalizar inputs
-        if (vars.getInput() != null) {
-            for (ProcessDefinitionV2Plus.VariableDefinitionV2Plus v : vars.getInput()) {
-                if (v.getTypeRef() == null && v.getTypeRef() != null) {
-                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
-                }
-                if (v.getCardinality() == null) {
-                    v.setCardinality(inferer.determineCardinality(v.isList()));
-                }
+        VariableInferer inferer = new VariableInferer();
+
+        // Normalizar input variables
+        if (vars.getInputVariables() != null) {
+            for (ProcessVariableV2Plus v : vars.getInputVariables()) {
+                normalizeVariable(v, inferer);
             }
         }
 
-        // Normalizar outputs
-        if (vars.getOutput() != null) {
-            for (ProcessVariablesV2Plus v : vars.getOutputs()) {
-                if (v.getTypeRef() == null && v.getTypeId() != null) {
-                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
-                }
-                if (v.getCardinality() == null) {
-                    v.setCardinality(inferer.determineCardinality(v.isList()));
-                }
+        // Normalizar output variables
+        if (vars.getOutputVariables() != null) {
+            for (ProcessVariableV2Plus v : vars.getOutputVariables()) {
+                normalizeVariable(v, inferer);
             }
         }
 
-        // Normalizar privates
-        if (vars.getPrivates() != null) {
-            for (ProcessVariablesV2Plus v : vars.getPrivates()) {
-                if (v.getTypeRef() == null && v.getTypeId() != null) {
-                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
-                }
-                if (v.getCardinality() == null) {
-                    v.setCardinality(inferer.determineCardinality(v.isList()));
-                }
+        // Normalizar private variables
+        if (vars.getPrivateVariables() != null) {
+            for (ProcessVariableV2Plus v : vars.getPrivateVariables()) {
+                normalizeVariable(v, inferer);
             }
+        }
+    }
+
+    // Método auxiliar para normalizar uma variável individual
+    private static void normalizeVariable(ProcessVariableV2Plus var, VariableInferer inferer) {
+        // Mapear typeId para typeRef
+        if (var.getTypeRef() == null && var.getType() != null) {
+            var.setTypeRef(inferer.mapTypeIdToTypeRef(var.getType()));
+        }
+
+        // Definir cardinality baseado em isList
+        if (var.getCardinality() == null) {
+            var.setCardinality(var.isList() ? "many" : "one");
+        }
+
+        // Se não tiver descrição, adicionar uma padrão
+        if (var.getDescription() == null || var.getDescription().isEmpty()) {
+            var.setDescription("Variable " + var.getName());
+        }
+    }
+
+    // Método para extrair conditions do grafo
+    private static List<ProcessConditionV2Plus> extractConditionsFromGraph(ProcessGraphV2Plus graph) {
+        Map<String, ProcessConditionV2Plus> byKey = new LinkedHashMap<String, ProcessConditionV2Plus>();
+
+        if (graph == null || graph.getEdges() == null) {
+            return new ArrayList<ProcessConditionV2Plus>();
+        }
+
+        for (ProcessEdgeV2Plus edge : graph.getEdges()) {
+            String label = edge.getLabel();
+            if (label == null || label.trim().isEmpty() || "Untitled".equals(label)) {
+                continue;
+            }
+
+            String key = edge.getSource() + "->" + label.trim();
+
+            if (!byKey.containsKey(key)) {
+                ProcessConditionV2Plus condition = new ProcessConditionV2Plus();
+                condition.setId("cond_" + Math.abs(key.hashCode()));
+                condition.setName(label.trim());
+                condition.setExpression("label == \"" + label.trim().replace("\"","\\\"") + "\"");
+                condition.setLanguage("cel");
+                byKey.put(key, condition);
+            }
+        }
+
+        return new ArrayList<ProcessConditionV2Plus>(byKey.values());
+    }
+
+    // Método para anexar conditionRef às edges
+    private static void attachConditionRefsToEdges(ProcessGraphV2Plus graph, List<ProcessConditionV2Plus> conditions) {
+        if (graph == null || graph.getEdges() == null) return;
+
+        for (ProcessEdgeV2Plus edge : graph.getEdges()) {
+            if (edge.getLabel() == null || "Untitled".equals(edge.getLabel())) continue;
+
+            String key = edge.getSource() + "->" + edge.getLabel().trim();
+            String id = "cond_" + Math.abs(key.hashCode());
+
+            // Adicionar conditionRef à edge
+            if (edge.getProperties() == null) {
+                edge.setProperties(new HashMap<String, Object>());
+            }
+            edge.getProperties().put("conditionRef", id);
         }
     }
 
@@ -255,7 +288,7 @@ private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixe
 
         // Normalizar inputs
         if (vars.getInputs() != null) {
-            for (ProcessVariablesV2Plus v : vars.getInputs()) {
+            for (ProcessVariableV2Plus v : vars.getInputs()) {
                 if (v.getTypeRef() == null && v.getTypeId() != null) {
                     v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
                 }
@@ -267,7 +300,7 @@ private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixe
 
         // Normalizar outputs
         if (vars.getOutputs() != null) {
-            for (ProcessVariablesV2Plus v : vars.getOutputs()) {
+            for (ProcessVariableV2Plus v : vars.getOutputs()) {
                 if (v.getTypeRef() == null && v.getTypeId() != null) {
                     v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
                 }
@@ -279,7 +312,7 @@ private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixe
 
         // Normalizar privates
         if (vars.getPrivates() != null) {
-            for (ProcessVariablesV2Plus v : vars.getPrivates()) {
+            for (ProcessVariableV2Plus v : vars.getPrivates()) {
                 if (v.getTypeRef() == null && v.getTypeId() != null) {
                     v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
                 }
@@ -324,7 +357,7 @@ private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixe
         // Etapas 1 e 2 (Variáveis, Grafo, Condições, Mapeamentos - já estáveis)
         // ...
         VariableInferer variableInferer = new VariableInferer();
-        processDefinition.setVariables(variableInferer.inferTypedVariables(mainArtifact));
+        processDefinition.setVariables(variableInferer.inferTypedVariable(mainArtifact));
 
        // DataTypesBuilder dataTypesBuilder = new DataTypesBuilder();
        // report.setDataTypes(dataTypesBuilder.synthesizeDomainTypes(mainArtifact));

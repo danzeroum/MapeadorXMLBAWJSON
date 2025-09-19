@@ -7,7 +7,6 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.FlowObject;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
