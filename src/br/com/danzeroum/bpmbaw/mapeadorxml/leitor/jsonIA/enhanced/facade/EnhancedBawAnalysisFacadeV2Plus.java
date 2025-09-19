@@ -8,10 +8,9 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWX
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusVariablesExtractor;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.normalizers.GraphNormalizer;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
-import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Bpd;
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.BusinessProcessDiagram;
-
+import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.*;
 
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions;
@@ -158,33 +157,90 @@ public class EnhancedBawAnalysisFacadeV2Plus {
 private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(
         Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
 
-    // 1. Extrair estrutura base com o extrator mestre
-    TWXToV2PlusMasterExtractor masterExtractor = new TWXToV2PlusMasterExtractor(loader);
-    ProcessDefinitionV2Plus definition = masterExtractor.extractProcessDefinition(mainArtifact);
+    // Usar o método estático que já existe
+    ProcessDefinitionV2Plus definition = TWXToV2PlusMasterExtractor.createMinimalDefinition(
+            mainArtifact, loader, config);
 
-    // 2. Normalizar o grafo (promover tipos e recalcular entry/end points)
+    // Normalizar grafo
     GraphNormalizer graphNormalizer = new GraphNormalizer();
     graphNormalizer.promoteCanonicalTypeToType(definition);
     graphNormalizer.recomputeEntryAndEndPoints(definition);
 
-    // 3. Extrair, converter e anexar conditions a partir das arestas
-    ConditionAdapter condAdapter = new ConditionAdapter();
-    List<ConditionV2Plus> conditions = condAdapter.extractConditionsFromEdges(definition);
-    condAdapter.attachConditionRefs(definition, conditions);
+    // Extrair e anexar conditions - passar apenas o graph
+    if (definition.getGraph() != null) {
+        ConditionAdapter condAdapter = new ConditionAdapter();
+        List<ConditionV2Plus> conditions = condAdapter.extractConditionsFromEdges(
+                definition.getGraph());
+        condAdapter.attachConditionRefs(definition.getGraph(), conditions);
+        definition.setConditions(conditions);
+    }
 
-    // 4. Transformar mapeamentos de JS para CEL
+    // Transformar mapeamentos
     MappingTransformer mappingTransformer = new MappingTransformer();
-    ProcessMappingsV2Plus mappings = mappingTransformer.consolidateFromFlow(mainArtifact);
-    definition.setMappings(mappings); // Anexa a estrutura de mapeamentos
+    ProcessMappingsV2Plus mappings = createBasicMappings(); // Usar método simplificado
+    if (mappings != null) {
+        definition.setMappings(mappings);
+    }
 
-    // 5. Inferir e normalizar os tipos das variáveis para o formato typeRef
-    VariableInferer varInferer = new VariableInferer();
+    // Normalizar variáveis
     if (definition.getVariables() != null) {
-        normalizeVariableTypes(definition.getVariables(), varInferer);
+        normalizeProcessVariables(definition.getVariables());
     }
 
     return definition;
 }
+    private static void normalizeProcessVariables(ProcessVariablesV2Plus vars) {
+        br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.inferers.VariableInferer inferer = new br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.inferers.VariableInferer();
+
+        // Normalizar inputs
+        if (vars.getInput() != null) {
+            for (ProcessDefinitionV2Plus.VariableDefinitionV2Plus v : vars.getInput()) {
+                if (v.getTypeRef() == null && v.getTypeRef() != null) {
+                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+                if (v.getCardinality() == null) {
+                    v.setCardinality(inferer.determineCardinality(v.isList()));
+                }
+            }
+        }
+
+        // Normalizar outputs
+        if (vars.getOutput() != null) {
+            for (ProcessVariablesV2Plus v : vars.getOutputs()) {
+                if (v.getTypeRef() == null && v.getTypeId() != null) {
+                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+                if (v.getCardinality() == null) {
+                    v.setCardinality(inferer.determineCardinality(v.isList()));
+                }
+            }
+        }
+
+        // Normalizar privates
+        if (vars.getPrivates() != null) {
+            for (ProcessVariablesV2Plus v : vars.getPrivates()) {
+                if (v.getTypeRef() == null && v.getTypeId() != null) {
+                    v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+                if (v.getCardinality() == null) {
+                    v.setCardinality(inferer.determineCardinality(v.isList()));
+                }
+            }
+        }
+    }
+
+
+    private static ProcessMappingsV2Plus createBasicMappings() {
+        ProcessMappingsV2Plus mappings = new ProcessMappingsV2Plus();
+        mappings.setExprLang("cel");
+
+        // Inicializar listas vazias
+        mappings.setInputs(new ArrayList<InputMappingV2Plus>());
+        mappings.setOutputs(new ArrayList<OutputMappingV2Plus>());
+        mappings.setTransformations(new ArrayList<TransformationRuleV2Plus>());
+
+        return mappings;
+    }
 
 // NOVO MÉTODO AUXILIAR (ADICIONAR NO FINAL DA CLASSE):
     /**
@@ -194,35 +250,45 @@ private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixe
      * @param vars O objeto que contém as definições de variáveis.
      * @param inferer A instância do inferer para realizar o mapeamento.
      */
-    private static void normalizeVariableTypes(VariablesDefinitionV2Plus vars, VariableInferer inferer) {
+    private static void normalizeProcessVariables(ProcessVariablesV2Plus vars) {
+        VariableInferer inferer = new VariableInferer();
+
         // Normalizar inputs
-        if (vars.getInput() != null) {
-            for (VariableV2Plus v : vars.getInput()) {
+        if (vars.getInputs() != null) {
+            for (ProcessVariablesV2Plus v : vars.getInputs()) {
                 if (v.getTypeRef() == null && v.getTypeId() != null) {
                     v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+                if (v.getCardinality() == null) {
+                    v.setCardinality(inferer.determineCardinality(v.isList()));
                 }
             }
         }
 
         // Normalizar outputs
-        if (vars.getOutput() != null) {
-            for (VariableV2Plus v : vars.getOutput()) {
+        if (vars.getOutputs() != null) {
+            for (ProcessVariablesV2Plus v : vars.getOutputs()) {
                 if (v.getTypeRef() == null && v.getTypeId() != null) {
                     v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+                if (v.getCardinality() == null) {
+                    v.setCardinality(inferer.determineCardinality(v.isList()));
                 }
             }
         }
 
-        // Normalizar private
-        if (vars.getPrivate() != null) {
-            for (VariableV2Plus v : vars.getPrivate()) {
+        // Normalizar privates
+        if (vars.getPrivates() != null) {
+            for (ProcessVariablesV2Plus v : vars.getPrivates()) {
                 if (v.getTypeRef() == null && v.getTypeId() != null) {
                     v.setTypeRef(inferer.mapTypeIdToTypeRef(v.getTypeId()));
+                }
+                if (v.getCardinality() == null) {
+                    v.setCardinality(inferer.determineCardinality(v.isList()));
                 }
             }
         }
     }
-
     private static Bpd createBpdFromDefinitions(Definitions definitions) {
         if (definitions == null || definitions.getProcess() == null) {
             return null;

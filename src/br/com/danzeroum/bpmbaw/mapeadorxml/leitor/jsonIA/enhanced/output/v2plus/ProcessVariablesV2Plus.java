@@ -16,7 +16,8 @@ import java.util.List;
  */
 public class ProcessVariablesV2Plus {
 
-
+    @JsonProperty("typeId")
+    private String typeId;
 
     @JsonProperty("typeRef")
     private String typeRef;
@@ -28,7 +29,13 @@ public class ProcessVariablesV2Plus {
     private List<ProcessDefinitionV2Plus.VariableDefinitionV2Plus> input;
     private List<ProcessDefinitionV2Plus.VariableDefinitionV2Plus> output;
     private List<ProcessDefinitionV2Plus.VariableDefinitionV2Plus> privateVars;
+    public String getTypeId() {
+        return typeId;
+    }
 
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
+    }
     // =========================================================================
     // CONSTRUCTOR
     // =========================================================================

@@ -2,7 +2,6 @@ package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.normalizers;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class GraphNormalizer {
 
@@ -11,15 +10,47 @@ public class GraphNormalizer {
 
         for (ProcessNodeV2Plus n : pd.getGraph().getNodes()) {
             if (n.getProperties() != null) {
-                // Corrigido: getProperties() retorna Map<String, Object>
                 Object canonObj = n.getProperties().get("canonicalType");
                 if (canonObj != null) {
-                    String canon = canonObj.toString();
-                    if (!canon.isEmpty()) {
-                        n.setType(canon);
+                    String canonStr = canonObj.toString();
+                    if (!canonStr.isEmpty()) {
+                        // Converter String para NodeType enum
+                        ProcessNodeV2Plus.NodeType nodeType = convertToNodeType(canonStr);
+                        n.setType(nodeType);
                     }
                 }
             }
+        }
+    }
+
+    private ProcessNodeV2Plus.NodeType convertToNodeType(String typeStr) {
+        // Mapear strings para enum NodeType
+        if (typeStr == null) return ProcessNodeV2Plus.NodeType.UNKNOWN;
+
+        switch (typeStr) {
+            case "StartEvent":
+            case "START_EVENT":
+                return ProcessNodeV2Plus.NodeType.START_EVENT;
+            case "EndEvent":
+            case "END_EVENT":
+                return ProcessNodeV2Plus.NodeType.END_EVENT;
+            case "UserTask":
+            case "USER_TASK":
+                return ProcessNodeV2Plus.NodeType.USER_TASK;
+            case "ScriptTask":
+            case "SCRIPT":
+                return ProcessNodeV2Plus.NodeType.SCRIPT_TASK;
+            case "ExclusiveGateway":
+            case "GATEWAY":
+                return ProcessNodeV2Plus.NodeType.EXCLUSIVE_GATEWAY;
+            case "SubProcess":
+            case "SUBPROCESS":
+                return ProcessNodeV2Plus.NodeType.SUB_PROCESS;
+            case "ServiceTask":
+            case "SYSTEM_TASK":
+                return ProcessNodeV2Plus.NodeType.TASK;
+            default:
+                return ProcessNodeV2Plus.NodeType.UNKNOWN;
         }
     }
 
@@ -30,14 +61,23 @@ public class GraphNormalizer {
         Set<String> ends = new HashSet<String>();
 
         for (ProcessNodeV2Plus node : pd.getGraph().getNodes()) {
-            if ("StartEvent".equals(node.getType())) {
+            if (node.getType() == ProcessNodeV2Plus.NodeType.START_EVENT) {
                 starts.add(node.getId());
-            } else if ("EndEvent".equals(node.getType())) {
+            } else if (node.getType() == ProcessNodeV2Plus.NodeType.END_EVENT) {
                 ends.add(node.getId());
             }
         }
 
         pd.getGraph().setEntryPoints(new ArrayList<String>(starts));
         pd.getGraph().setEndPoints(new ArrayList<String>(ends));
+    }
+
+    // Adicionar métodos que estavam faltando
+    public void fixEndPoints(ProcessDefinitionV2Plus pd) {
+        recomputeEntryAndEndPoints(pd);
+    }
+
+    public void normalizeNodeTypes(ProcessDefinitionV2Plus pd) {
+        promoteCanonicalTypeToType(pd);
     }
 }

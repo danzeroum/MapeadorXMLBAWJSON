@@ -5,6 +5,7 @@ import java.util.*;
 
 public class ConditionAdapter {
 
+    // Método corrigido para receber ProcessGraphV2Plus ao invés de ProcessDefinitionV2Plus
     public List<ConditionV2Plus> extractConditionsFromEdges(ProcessGraphV2Plus graph) {
         Map<String, ConditionV2Plus> byKey = new LinkedHashMap<String, ConditionV2Plus>();
 
