@@ -320,14 +320,14 @@ public class EnhancedStructuredProcessReportV2 {
             // Coletar todos os typeRefs usados
             List<String> usedTypeRefs = new ArrayList<>();
 
-            if (processDefinition.getVariables().getInput() != null) {
-                processDefinition.getVariables().getInput().forEach(v -> usedTypeRefs.add(v.getTypeRef()));
+            if (processDefinition.getVariables().getInputs() != null) {
+                processDefinition.getVariables().getInputs().forEach(v -> usedTypeRefs.add(v.getTypeRef()));
             }
-            if (processDefinition.getVariables().getOutput() != null) {
-                processDefinition.getVariables().getOutput().forEach(v -> usedTypeRefs.add(v.getTypeRef()));
+            if (processDefinition.getVariables().getOutputs() != null) {
+                processDefinition.getVariables().getOutputs().forEach(v -> usedTypeRefs.add(v.getTypeRef()));
             }
-            if (processDefinition.getVariables().getPrivateVars() != null) {
-                processDefinition.getVariables().getPrivateVars().forEach(v -> usedTypeRefs.add(v.getTypeRef()));
+            if (processDefinition.getVariables().getPrivateVariables() != null) {
+                processDefinition.getVariables().getPrivateVariables().forEach(v -> usedTypeRefs.add(v.getTypeRef()));
             }
 
             // Verificar se cada typeRef existe em dataTypes
@@ -542,7 +542,7 @@ public class EnhancedStructuredProcessReportV2 {
 
             // Teste 3: ProcessDefinition integrado
             //report.getProcessDefinition().addInputVariable("testInput", "dt:string@1", "one", false, "Test input variable");
-            System.out.println("✅ Variable addition: " + (report.getProcessDefinition().getVariables().getInput().size() == 1));
+            System.out.println("✅ Variable addition: " + (report.getProcessDefinition().getVariables().getInputs().size() == 1));
 
             // Teste 4: Compatibilidade V2 (métodos deprecated)
             ProcessGraphV2Plus graph = report.getProcessGraph(); // Método deprecated
