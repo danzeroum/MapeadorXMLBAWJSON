@@ -1,3 +1,4 @@
+// Em: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIA/enhanced/factory/ProcessDefinitionFactoryV2Plus.java
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.factory;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
@@ -80,8 +81,8 @@ public class ProcessDefinitionFactoryV2Plus {
         ProcessLogicV2Plus logic = createSimpleLogic();
         definition.setLogic(logic);
 
-        // ===== METADATA =====
-        definition.setStats(generateStats(definition));
+        // ===== METADATA - CORREÇÃO: REMOVIDA CHAMADA AO setStats =====
+        // A estatística é calculada dinamicamente por getStats()
 
         return definition;
     }
@@ -164,8 +165,8 @@ public class ProcessDefinitionFactoryV2Plus {
         ProcessLogicV2Plus logic = createComplexLogic();
         definition.setLogic(logic);
 
-        // ===== METADATA =====
-        definition.setStats(generateStats(definition));
+        // ===== METADATA - CORREÇÃO: REMOVIDA CHAMADA AO setStats =====
+        // A estatística é calculada dinamicamente por getStats()
 
         return definition;
     }
@@ -357,7 +358,8 @@ public class ProcessDefinitionFactoryV2Plus {
         condition.setId("cond_valid");
         condition.setName("Formulário Válido");
         condition.setExpression("validationResult.isValid == true");
-        condition.setLanguage("cel");
+        // CORREÇÃO: Usar o enum ExpressionLanguage
+        condition.setLanguage(ProcessConditionV2Plus.ExpressionLanguage.CEL);
         conditions.add(condition);
 
         return conditions;
@@ -400,7 +402,8 @@ public class ProcessDefinitionFactoryV2Plus {
         condition.setId(id);
         condition.setName(name);
         condition.setExpression(expression);
-        condition.setLanguage("cel");
+        // CORREÇÃO: Usar o enum ExpressionLanguage
+        condition.setLanguage(ProcessConditionV2Plus.ExpressionLanguage.CEL);
         return condition;
     }
 
@@ -513,33 +516,15 @@ public class ProcessDefinitionFactoryV2Plus {
     private static ProcessLogicV2Plus createSimpleLogic() {
         ProcessLogicV2Plus logic = new ProcessLogicV2Plus();
 
-        // A classe ProcessLogicV2Plus provavelmente tem listas de scripts e validações
-        // Vou usar estruturas genéricas já que não temos as classes exatas
+        // CORREÇÃO: Usar addItem para adicionar um LogicItemV2Plus
+        LogicItemV2Plus script = LogicItemV2Plus.createScript("script_validate", "Validate Script", "// Validation logic\nreturn isValid(input);");
+        script.setInputs(Arrays.asList("recondicionamento"));
+        script.setOutputs(Arrays.asList("validationResult"));
+        logic.addItem(script);
 
-        // Se ProcessLogicV2Plus tiver um mapa ou lista genérica para scripts
-        Map<String, Object> scriptData = new HashMap<String, Object>();
-        scriptData.put("id", "script_validate");
-        scriptData.put("language", "javascript");
-        scriptData.put("code", "// Validation logic\nreturn isValid(input);");
-        scriptData.put("inputs", Arrays.asList("recondicionamento"));
-        scriptData.put("outputs", Arrays.asList("validationResult"));
-
-        // Se ProcessLogicV2Plus tiver métodos para adicionar dados
-        if (logic.getMetadata() == null) {
-            logic.setMetadata(new HashMap<String, Object>());
-        }
-        logic.getMetadata().put("script_validate", scriptData);
-
-        // Para validações
-        Map<String, Object> validationData = new HashMap<String, Object>();
-        validationData.put("id", "val_required");
-        validationData.put("when", "step == 'Validar Formulário'");
-        validationData.put("rule", "recondicionamento != null");
-        validationData.put("severity", "error");
-        validationData.put("messageKey", "campo.obrigatorio");
-        validationData.put("description", "Recondicionamento é obrigatório");
-
-        logic.getMetadata().put("validation_required", validationData);
+        // CORREÇÃO: Adicionar uma ValidationRuleV2Plus
+        ValidationRuleV2Plus validation = ValidationRuleV2Plus.createRequiredField("recondicionamento", "val_required");
+        logic.addValidation(validation);
 
         return logic;
     }
@@ -550,63 +535,20 @@ public class ProcessDefinitionFactoryV2Plus {
     private static ProcessLogicV2Plus createComplexLogic() {
         ProcessLogicV2Plus logic = new ProcessLogicV2Plus();
 
-        // Inicializar metadata se necessário
-        if (logic.getMetadata() == null) {
-            logic.setMetadata(new HashMap<String, Object>());
-        }
+        // CORREÇÃO: Adicionar múltiplos LogicItemV2Plus
+        LogicItemV2Plus validateScript = LogicItemV2Plus.createScript("script_validate", "Validate Form", "// Validar formulário\nreturn validateForm(recondicionamento);");
+        validateScript.setInputs(Arrays.asList("recondicionamento"));
+        validateScript.setOutputs(Arrays.asList("validationResult"));
+        logic.addItem(validateScript);
 
-        // Scripts múltiplos
-        List<Map<String, Object>> scripts = new ArrayList<Map<String, Object>>();
+        LogicItemV2Plus calculateScript = LogicItemV2Plus.createScript("script_calculate", "Calculate Budget", "// Calcular orçamento\nreturn calculateBudget(viatura, instalacao);");
+        calculateScript.setInputs(Arrays.asList("viatura", "instalacao"));
+        calculateScript.setOutputs(Arrays.asList("orcamentoAux"));
+        logic.addItem(calculateScript);
 
-        Map<String, Object> validateScript = new HashMap<String, Object>();
-        validateScript.put("id", "script_validate");
-        validateScript.put("language", "javascript");
-        validateScript.put("code", "// Validar formulário\nreturn validateForm(recondicionamento);");
-        validateScript.put("inputs", Arrays.asList("recondicionamento"));
-        validateScript.put("outputs", Arrays.asList("validationResult"));
-        scripts.add(validateScript);
-
-        Map<String, Object> calculateScript = new HashMap<String, Object>();
-        calculateScript.put("id", "script_calculate");
-        calculateScript.put("language", "javascript");
-        calculateScript.put("code", "// Calcular orçamento\nreturn calculateBudget(viatura, instalacao);");
-        calculateScript.put("inputs", Arrays.asList("viatura", "instalacao"));
-        calculateScript.put("outputs", Arrays.asList("orcamentoAux"));
-        scripts.add(calculateScript);
-
-        logic.getMetadata().put("scripts", scripts);
-
-        // Validações múltiplas
-        List<Map<String, Object>> validations = new ArrayList<Map<String, Object>>();
-
-        Map<String, Object> matriculaValidation = new HashMap<String, Object>();
-        matriculaValidation.put("id", "val_matricula");
-        matriculaValidation.put("description", "Validar Matrícula");
-        matriculaValidation.put("rule", "!matches(recondicionamento.viatura.matricula, '^[A-Z0-9]{6,12}$')");
-        matriculaValidation.put("severity", "error");
-        matriculaValidation.put("messageKey", "matricula.formato.invalido");
-        matriculaValidation.put("when", "step == 'Validar Formulário'");
-        validations.add(matriculaValidation);
-
-        Map<String, Object> orcamentoValidation = new HashMap<String, Object>();
-        orcamentoValidation.put("id", "val_orcamento");
-        orcamentoValidation.put("description", "Validar Orçamento");
-        orcamentoValidation.put("rule", "orcamentoAux.valor <= 0");
-        orcamentoValidation.put("severity", "error");
-        orcamentoValidation.put("messageKey", "orcamento.valor.positivo");
-        orcamentoValidation.put("when", "step == 'Processar Orçamento'");
-        validations.add(orcamentoValidation);
-
-        Map<String, Object> transporteValidation = new HashMap<String, Object>();
-        transporteValidation.put("id", "val_transporte");
-        transporteValidation.put("description", "Validar Responsável Transporte");
-        transporteValidation.put("rule", "isEmpty(recondicionamento.transporteEntrega.responsavelTransporte.value)");
-        transporteValidation.put("severity", "error");
-        transporteValidation.put("messageKey", "campo.obrigatorio");
-        transporteValidation.put("when", "step == 'Validar Formulário'");
-        validations.add(transporteValidation);
-
-        logic.getMetadata().put("validations", validations);
+        // CORREÇÃO: Adicionar múltiplas ValidationRuleV2Plus
+        logic.addValidation(ValidationRuleV2Plus.createRequiredField("recondicionamento.viatura.matricula", "val_matricula_req"));
+        logic.addValidation(ValidationRuleV2Plus.createRequiredField("orcamentoAux.valor", "val_orcamento_req"));
 
         return logic;
     }
@@ -614,89 +556,9 @@ public class ProcessDefinitionFactoryV2Plus {
     /**
      * Gera estatísticas do processo
      */
-    private static String generateStats(ProcessDefinitionV2Plus definition) {
-        Map<String, Integer> stats = new HashMap<String, Integer>();
-
-        // Contar variáveis
-        if (definition.getVariables() != null) {
-            ProcessVariablesV2Plus vars = definition.getVariables();
-            int inputCount = vars.getInputs() != null ? vars.getInputs().size() : 0;
-            int outputCount = vars.getOutputs() != null ? vars.getOutputs().size() : 0;
-            int privateCount = vars.getPrivates() != null ? vars.getPrivates().size() : 0;
-
-            stats.put("inputVars", inputCount);
-            stats.put("outputVars", outputCount);
-            stats.put("privateVars", privateCount);
-            stats.put("totalVars", inputCount + outputCount + privateCount);
-        }
-
-        // Contar elementos do grafo
-        if (definition.getGraph() != null) {
-            ProcessGraphV2Plus graph = definition.getGraph();
-
-            if (graph.getNodes() != null) {
-                stats.put("nodes", graph.getNodes().size());
-
-                // Contar por tipo de nó
-                int startEvents = 0;
-                int endEvents = 0;
-                int tasks = 0;
-                int gateways = 0;
-
-                for (ProcessNodeV2Plus node : graph.getNodes()) {
-                    if (node.getType() == ProcessNodeV2Plus.NodeType.START_EVENT) startEvents++;
-                    else if (node.getType() == ProcessNodeV2Plus.NodeType.END_EVENT) endEvents++;
-                    else if (node.getType() == ProcessNodeV2Plus.NodeType.GATEWAY) gateways++;
-                    else tasks++;
-                }
-
-                stats.put("startEvents", startEvents);
-                stats.put("endEvents", endEvents);
-                stats.put("gateways", gateways);
-                stats.put("tasks", tasks);
-            }
-
-            if (graph.getEdges() != null) {
-                stats.put("edges", graph.getEdges().size());
-            }
-
-            if (graph.getLanes() != null) {
-                stats.put("lanes", graph.getLanes().size());
-            }
-        }
-
-        // Contar condições
-        if (definition.getConditions() != null) {
-            stats.put("conditions", definition.getConditions().size());
-        }
-
-        // Contar elementos de lógica (se estiverem em metadata)
-        if (definition.getLogic() != null && definition.getLogic().getMetadata() != null) {
-            Map<String, Object> logicMeta = definition.getLogic().getMetadata();
-
-            if (logicMeta.get("scripts") instanceof List) {
-                stats.put("scripts", ((List<?>) logicMeta.get("scripts")).size());
-            }
-
-            if (logicMeta.get("validations") instanceof List) {
-                stats.put("validations", ((List<?>) logicMeta.get("validations")).size());
-            }
-        }
-
-        // Formatar como string legível
-        StringBuilder sb = new StringBuilder();
-        sb.append("ProcessStats{");
-
-        boolean first = true;
-        for (Map.Entry<String, Integer> entry : stats.entrySet()) {
-            if (!first) sb.append(", ");
-            sb.append(entry.getKey()).append("=").append(entry.getValue());
-            first = false;
-        }
-
-        sb.append("}");
-
-        return sb.toString();
+    private static ProcessDefinitionV2Plus.ProcessDefinitionStats generateStats(ProcessDefinitionV2Plus definition) {
+        // CORREÇÃO: Retornar o objeto de estatísticas, não uma String
+        return definition.getStats();
     }
 
     /**
@@ -704,10 +566,7 @@ public class ProcessDefinitionFactoryV2Plus {
      */
     public static ProcessDefinitionV2Plus createFromLegacyTWX(Object twxArtifact) {
         ProcessDefinitionV2Plus definition = createEmptyProcess();
-
         // Adicionar lógica de conversão aqui quando necessário
-        // Por enquanto retorna estrutura vazia
-
         return definition;
     }
 
@@ -717,11 +576,9 @@ public class ProcessDefinitionFactoryV2Plus {
     public static boolean validateProcessDefinition(ProcessDefinitionV2Plus definition) {
         if (definition == null) return false;
 
-        // Validar que tem pelo menos estruturas básicas
         if (definition.getVariables() == null) return false;
         if (definition.getGraph() == null) return false;
 
-        // Validar que o grafo tem pelo menos start e end
         ProcessGraphV2Plus graph = definition.getGraph();
         if (graph.getNodes() == null || graph.getNodes().isEmpty()) return false;
 
@@ -735,7 +592,6 @@ public class ProcessDefinitionFactoryV2Plus {
 
         if (!hasStart || !hasEnd) return false;
 
-        // Validar que tem pelo menos uma edge se tiver mais de um nó
         if (graph.getNodes().size() > 1) {
             if (graph.getEdges() == null || graph.getEdges().isEmpty()) {
                 return false;

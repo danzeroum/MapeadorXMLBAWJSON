@@ -51,9 +51,10 @@ public class TWXToV2PlusVariablesExtractor {
             for (BpdParameter param : bpd.getBpdParameters()) {
                 ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.fromBpdParameter(param);
                 if (param.getParameterType() == 1) { // Input
-                    variables.addInputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+                    variables.addInputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getDescription(), "many".equals(varDef.getCardinality()));
+
                 } else { // Output
-                    variables.addOutputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+                    variables.addOutputVariable(varDef.getName(), varDef.getTypeRef(), varDef.getDescription(), "many".equals(varDef.getCardinality()));
                 }
             }
         } else {
@@ -70,7 +71,7 @@ public class TWXToV2PlusVariablesExtractor {
 
                     for (PrivateVariable pVar : pool.getPrivateVariables()) {
                         ProcessDefinitionV2Plus.VariableDefinitionV2Plus varDef = ProcessDefinitionV2Plus.VariableDefinitionV2Plus.fromPrivateVariable(pVar);
-                        variables.addPrivateVariable(varDef.getName(), varDef.getTypeRef(), varDef.getCardinality(), varDef.isNullable(), varDef.getDescription());
+                        variables.addPrivateVariable(varDef.getName(), varDef.getTypeRef(), varDef.getDescription(), "many".equals(varDef.getCardinality()));
                     }
                 }
             }
@@ -84,9 +85,10 @@ public class TWXToV2PlusVariablesExtractor {
         addPrimitiveDataTypes(dataTypes); // Garante que os tipos básicos sempre existam
 
         // Itera sobre todas as variáveis (entrada, saída e privadas) e processa seus tipos
-        variables.getInput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
-        variables.getOutput().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
-        variables.getPrivateVars().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
+        variables.getInputs()
+                .forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
+        variables.getOutputs().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
+        variables.getPrivateVariables().forEach(var -> processVariableType(var.getTypeRef(), dataTypes));
 
         return dataTypes;
     }

@@ -251,11 +251,11 @@ public class GraphExtractorV2Plus {
         String type = componentType.toLowerCase();
         if (type.contains("start")) return ProcessNodeV2Plus.NodeType.START_EVENT;
         if (type.contains("end")) return ProcessNodeV2Plus.NodeType.END_EVENT;
-        if (type.contains("script")) return ProcessNodeV2Plus.NodeType.SCRIPT_TASK;
+        if (type.contains("script")) return ProcessNodeV2Plus.NodeType.SCRIPT;
         if (type.contains("user") || type.contains("human")) return ProcessNodeV2Plus.NodeType.USER_TASK;
         if (type.contains("service")) return ProcessNodeV2Plus.NodeType.SERVICE_TASK;
         if (type.contains("gateway")) return ProcessNodeV2Plus.NodeType.EXCLUSIVE_GATEWAY;
-        if (type.contains("subprocess")) return ProcessNodeV2Plus.NodeType.SUB_PROCESS;
+        if (type.contains("subprocess")) return ProcessNodeV2Plus.NodeType.SUBPROCESS;
         if (type.contains("callactivity")) return ProcessNodeV2Plus.NodeType.CALL_ACTIVITY;
         return ProcessNodeV2Plus.NodeType.TASK;
     }

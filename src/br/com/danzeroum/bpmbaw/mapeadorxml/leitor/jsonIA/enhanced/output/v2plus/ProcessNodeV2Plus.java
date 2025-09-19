@@ -181,6 +181,16 @@ public class ProcessNodeV2Plus {
     @JsonProperty("metadata")
     private Map<String, Object> metadata;
 
+    @JsonProperty("calledArtifactId")
+    private String calledArtifactId; // ID do subprocesso chamado
+
+    @JsonProperty("coachId")
+    private String coachId; // ID do Coach associado
+
+    @JsonProperty("parameterMapping")
+    private ParameterMappingV2Plus parameterMapping; // Mapeamento de variáveis
+
+
     // =========================================================================
     // CONSTRUCTORS
     // =========================================================================
@@ -210,14 +220,40 @@ public class ProcessNodeV2Plus {
      * Constructor completo
      */
     public ProcessNodeV2Plus(String id, NodeType type, String name, String lane) {
-        this(id, type);
+        this.id = id;
+        this.type = type;
         this.name = name;
         this.lane = lane;
+        this.parameterMapping = new ParameterMappingV2Plus(); // Inicializa o mapeamento
     }
 
     // =========================================================================
     // GETTERS E SETTERS
     // =========================================================================
+    // Adicione getters e setters para os novos campos
+    public String getCalledArtifactId() {
+        return calledArtifactId;
+    }
+
+    public void setCalledArtifactId(String calledArtifactId) {
+        this.calledArtifactId = calledArtifactId;
+    }
+
+    public String getCoachId() {
+        return coachId;
+    }
+
+    public void setCoachId(String coachId) {
+        this.coachId = coachId;
+    }
+
+    public ParameterMappingV2Plus getParameterMapping() {
+        return parameterMapping;
+    }
+
+    public void setParameterMapping(ParameterMappingV2Plus parameterMapping) {
+        this.parameterMapping = parameterMapping;
+    }
 
     public String getId() {
         return id;

@@ -39,13 +39,13 @@ public class GraphNormalizer {
                 return ProcessNodeV2Plus.NodeType.USER_TASK;
             case "ScriptTask":
             case "SCRIPT":
-                return ProcessNodeV2Plus.NodeType.SCRIPT_TASK;
+                return ProcessNodeV2Plus.NodeType.SCRIPT;
             case "ExclusiveGateway":
             case "GATEWAY":
                 return ProcessNodeV2Plus.NodeType.EXCLUSIVE_GATEWAY;
             case "SubProcess":
             case "SUBPROCESS":
-                return ProcessNodeV2Plus.NodeType.SUB_PROCESS;
+                return ProcessNodeV2Plus.NodeType.SUBPROCESS;
             case "ServiceTask":
             case "SYSTEM_TASK":
                 return ProcessNodeV2Plus.NodeType.TASK;

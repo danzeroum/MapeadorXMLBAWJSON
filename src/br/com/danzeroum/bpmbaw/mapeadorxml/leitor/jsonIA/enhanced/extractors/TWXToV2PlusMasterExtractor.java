@@ -48,7 +48,7 @@ public class TWXToV2PlusMasterExtractor {
             TWXToV2PlusVariablesExtractor varExtractor = new TWXToV2PlusVariablesExtractor(loader);
             ProcessVariablesV2Plus variables = varExtractor.extractVariables(bpd);
             definition.setVariables(variables);
-            System.out.println("[LOG-MASTER] Variáveis extraídas. Inputs: " + variables.getInput().size() + ", Outputs: " + variables.getOutput().size() + ", Privadas: " + variables.getPrivateVars().size());
+            System.out.println("[LOG-MASTER] Variáveis extraídas. Inputs: " + variables.getInputs().size() + ", Outputs: " + variables.getOutputs().size() + ", Privadas: " + variables.getPrivateVariables().size());
 
             // 2. Extrair grafo (passando apenas o diagrama)
             System.out.println("🔗 Extracting graph...");

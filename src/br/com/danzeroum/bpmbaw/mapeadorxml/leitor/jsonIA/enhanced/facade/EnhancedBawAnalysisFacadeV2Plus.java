@@ -2,10 +2,7 @@ package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.BpmnProcessExtractor;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusMasterExtractor;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusUIExtractor;
-import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.TWXToV2PlusVariablesExtractor;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.inferers.VariableInferer;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.normalizers.GraphNormalizer;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2plus.*;
@@ -118,33 +115,41 @@ public class EnhancedBawAnalysisFacadeV2Plus {
     }
 
 
+    // Em: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIA/enhanced/facade/EnhancedBawAnalysisFacadeV2Plus.java
+
     private static ProcessDefinitionV2Plus extractWithV2PlusExtractorsCompletelyFixed(
             Object mainArtifact, ProcessLoaderV2Plus loader, AnalysisConfig config) {
 
-        // Linha 161 - createMinimalDefinition não recebe argumentos
-        ProcessDefinitionV2Plus definition = TWXToV2PlusMasterExtractor.createMinimalDefinition();
+        // Cria uma definição de processo baseada no ID do artefato principal
+        ProcessDefinitionV2Plus definition = ProcessDefinitionV2Plus.create(config.getProcessId());
 
-        // Extrair variáveis usando o extrator correto
-        TWXToV2PlusVariablesExtractor varExtractor = new TWXToV2PlusVariablesExtractor(loader);
-        List<ProcessVariableV2Plus> extractedVars = varExtractor.extractVariables(mainArtifact);
+        // ===== CORREÇÃO APLICADA AQUI =====
+        // O bloco inteiro de extração de variáveis foi substituído por esta lógica de despacho,
+        // que seleciona o extrator correto com base no tipo do artefato.
 
-        // Criar ProcessVariablesV2Plus e organizar as variáveis
-        ProcessVariablesV2Plus variables = new ProcessVariablesV2Plus();
-        variables.setInputVariables(new ArrayList<ProcessVariableV2Plus>());
-        variables.setOutputVariables(new ArrayList<ProcessVariableV2Plus>());
-        variables.setPrivateVariables(new ArrayList<ProcessVariableV2Plus>());
+        ProcessVariablesV2Plus variables = new ProcessVariablesV2Plus(); // Inicializa um contêiner vazio
 
-        // Distribuir variáveis por categoria
-        for (ProcessVariableV2Plus var : extractedVars) {
-            if (var.getName().contains("input") || var.getName().contains("recondicionamento")) {
-                variables.getInputVariables().add(var);
-            } else if (var.getName().contains("output") || var.getName().contains("orcamento")) {
-                variables.getOutputVariables().add(var);
-            } else {
-                variables.getPrivateVariables().add(var);
-            }
+        if (mainArtifact instanceof Teamworks && ((Teamworks) mainArtifact).getBpd() != null) {
+            // Cenário 1: É um BPD legado dentro de um artefato Teamworks
+            System.out.println("   -> Usando TWXToV2PlusVariablesExtractor para BPD legado.");
+            TWXToV2PlusVariablesExtractor varExtractor = new TWXToV2PlusVariablesExtractor(loader);
+            variables = varExtractor.extractVariables(((Teamworks) mainArtifact).getBpd());
+
+        } else if (mainArtifact instanceof Definitions) {
+            // Cenário 2: É um processo BPMN 2.0 moderno
+            System.out.println("   -> Usando BpmnToV2PlusVariablesExtractor para processo BPMN.");
+            variables = BpmnToV2PlusVariablesExtractor.extractVariables((Definitions) mainArtifact);
+
+        } else {
+            // Cenário de fallback: Se o tipo não for reconhecido, loga um aviso
+            System.err.println("   -> AVISO: Não foi possível extrair variáveis de um artefato do tipo: " + mainArtifact.getClass().getName());
         }
+
+        // Define as variáveis extraídas (já categorizadas) na definição do processo.
         definition.setVariables(variables);
+
+        // O restante da lógica para extrair grafo, condições e mapeamentos continua...
+        // =======================================================================
 
         // Extrair grafo
         ProcessGraphV2Plus graph = extractGraphFromArtifact(mainArtifact, loader);
@@ -155,7 +160,7 @@ public class EnhancedBawAnalysisFacadeV2Plus {
         graphNormalizer.promoteCanonicalTypeToType(definition);
         graphNormalizer.recomputeEntryAndEndPoints(definition);
 
-        // Criar conditions usando ProcessConditionV2Plus (não ConditionV2Plus)
+        // Criar conditions usando ProcessConditionV2Plus
         if (definition.getGraph() != null) {
             List<ProcessConditionV2Plus> conditions = extractConditionsFromGraph(definition.getGraph());
             attachConditionRefsToEdges(definition.getGraph(), conditions);

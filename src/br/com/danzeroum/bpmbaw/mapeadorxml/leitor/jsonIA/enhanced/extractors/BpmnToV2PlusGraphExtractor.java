@@ -47,8 +47,9 @@ public class BpmnToV2PlusGraphExtractor {
                             laneName // Associa o nome da lane diretamente aqui
                     );
 
-                    if (nodeType == ProcessNodeV2Plus.NodeType.SCRIPT_TASK) {
-                        node.setLogicRef("lg:" + fn.getId());
+                    if (nodeType == ProcessNodeV2Plus.NodeType.SCRIPT) {
+                        // Em vez de setLogicRef, usamos o mapa de propriedades genérico.
+                        node.addProperty("logicRef", "lg:" + fn.getId());
                     }
                     graph.addNode(node);
                 }

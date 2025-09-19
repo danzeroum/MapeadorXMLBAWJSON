@@ -88,12 +88,15 @@ public class BpmnToV2PlusVariablesExtractor {
         // Inputs
         if (ioSpec.getDataInputs() != null) {
             for (DataInput input : ioSpec.getDataInputs()) {
+
+                // ===== CORREÇÃO APLICADA AQUI =====
+                // A assinatura correta é: (String name, String type, String description, boolean isList)
+                // O argumento de cardinalidade ("many"/"one") foi removido.
                 variables.addInputVariable(
                         input.getName(),
                         ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(input.getItemSubjectRef()),
-                        (input.getIsCollection() != null && input.getIsCollection()) ? "many" : "one",
-                        false, // Inputs de processo geralmente não são nulos
-                        "Variável de entrada do processo."
+                        "Variável de entrada do processo.",
+                        (input.getIsCollection() != null && input.getIsCollection())
                 );
             }
         }
@@ -101,12 +104,14 @@ public class BpmnToV2PlusVariablesExtractor {
         // Outputs
         if (ioSpec.getDataOutputs() != null) {
             for (DataOutput output : ioSpec.getDataOutputs()) {
+
+                // ===== CORREÇÃO APLICADA AQUI =====
+                // A assinatura correta é: (String name, String type, String description, boolean isList)
                 variables.addOutputVariable(
                         output.getName(),
                         ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(output.getItemSubjectRef()),
-                        (output.getIsCollection() != null && output.getIsCollection()) ? "many" : "one",
-                        true, // Outputs podem ser nulos até serem preenchidos
-                        "Variável de saída do processo."
+                        "Variável de saída do processo.",
+                        (output.getIsCollection() != null && output.getIsCollection())
                 );
             }
         }
@@ -115,14 +120,17 @@ public class BpmnToV2PlusVariablesExtractor {
     private static void extractDataObjectsAsPrivateVars(List<DataObject> dataObjects, ProcessVariablesV2Plus variables) {
         if (dataObjects != null) {
             for (DataObject dataObject : dataObjects) {
+
+                // ===== CORREÇÃO APLICADA AQUI =====
+                // A assinatura correta é: (String name, String type, String description, boolean isList)
                 variables.addPrivateVariable(
                         dataObject.getName(),
                         ProcessDefinitionV2Plus.VariableDefinitionV2Plus.convertClassIdToTypeRef(dataObject.getItemSubjectRef()),
-                        dataObject.isCollection() ? "many" : "one",
-                        true, // Variáveis privadas podem começar nulas
-                        "Variável privada (DataObject)."
+                        "Variável privada (DataObject).",
+                        dataObject.isCollection()
                 );
             }
         }
     }
+
 }

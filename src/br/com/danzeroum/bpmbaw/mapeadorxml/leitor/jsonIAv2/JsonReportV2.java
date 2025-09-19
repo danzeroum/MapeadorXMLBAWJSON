@@ -370,8 +370,10 @@ public class JsonReportV2 {
         private List<String> preExecutionScripts = new ArrayList<>();
         private List<BoundaryEvent> boundaryEvents = new ArrayList<>();
         private List<UiComponent> components = new ArrayList<>();
-
+        private List<String> errors = new ArrayList<>();
         // Getters e Setters
+        public List<String> getErrors() { return errors; }
+        public void setErrors(List<String> errors) { this.errors = errors; }
         public String getCoachId() { return coachId; }
         public void setCoachId(String coachId) { this.coachId = coachId; }
         public String getCoachName() { return coachName; }

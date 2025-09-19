@@ -127,8 +127,8 @@ public class ProcessFlowV2Plus {
         if (definition == null || definition.getVariables() == null) return;
 
         // CORRIGIDO: Usar getters das listas de variáveis
-        int inputCount = definition.getVariables().getInput().size();
-        int outputCount = definition.getVariables().getOutput().size();
+        int inputCount = definition.getVariables().getInputs().size();
+        int outputCount = definition.getVariables().getOutputs().size();
         int totalVars = inputCount + outputCount;
 
         // Configurar engine baseado na complexidade
@@ -230,26 +230,26 @@ public class ProcessFlowV2Plus {
 
         if (definition != null && definition.getVariables() != null) {
             // CORRIGIDO: Usar tipos corretos
-            stats.inputCount = definition.getVariables().getInput().size();
-            stats.outputCount = definition.getVariables().getOutput().size();
-            stats.privateCount = definition.getVariables().getPrivateVars().size();
+            stats.inputCount = definition.getVariables().getInputs().size();
+            stats.outputCount = definition.getVariables().getOutputs().size();
+            stats.privateCount = definition.getVariables().getPrivateVariables().size();
             stats.totalCount = stats.inputCount + stats.outputCount + stats.privateCount;
 
             // Análise de tipos
             Map<String, Integer> typeCount = new HashMap<>();
 
             // CORRIGIDO: Iterar sobre as variáveis usando o tipo correto
-            for (ProcessDefinitionV2Plus.VariableDefinitionV2Plus var : definition.getVariables().getInput()) {
+            for (ProcessVariableV2Plus var : definition.getVariables().getInputs()) {
                 String type = extractBaseType(var.getTypeRef());
                 typeCount.put(type, typeCount.getOrDefault(type, 0) + 1);
             }
 
-            for (ProcessDefinitionV2Plus.VariableDefinitionV2Plus var : definition.getVariables().getOutput()) {
+            for (ProcessVariableV2Plus var : definition.getVariables().getOutputs()) {
                 String type = extractBaseType(var.getTypeRef());
                 typeCount.put(type, typeCount.getOrDefault(type, 0) + 1);
             }
 
-            for (ProcessDefinitionV2Plus.VariableDefinitionV2Plus var : definition.getVariables().getPrivateVars()) {
+            for (ProcessVariableV2Plus var : definition.getVariables().getPrivateVariables()) {
                 String type = extractBaseType(var.getTypeRef());
                 typeCount.put(type, typeCount.getOrDefault(type, 0) + 1);
             }

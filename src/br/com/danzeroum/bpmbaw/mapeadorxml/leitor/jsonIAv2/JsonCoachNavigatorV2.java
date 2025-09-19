@@ -51,7 +51,7 @@ public class JsonCoachNavigatorV2 {
         this.loader = loader;
         this.coachLayoutContext = JAXBContext.newInstance(CoachLayout.class);
     }
-
+/*
     public void runAnalysis() {
         // *** CORREÇÃO APLICADA AQUI ***
         // Para evitar ConcurrentModificationException, criamos uma cópia da coleção de artefatos
@@ -79,6 +79,67 @@ public class JsonCoachNavigatorV2 {
             }
         }
         // Após descobrir todas as views, processa os detalhes delas
+        processDiscoveredCoachViews();
+    }
+*/
+
+    // Local: src/br/com/danzeroum/bpmbaw/mapeadorxml/leitor/jsonIAv2/JsonCoachNavigatorV2.java
+
+    /**
+     * Executa a análise para encontrar e processar todas as definições de Coach (UI)
+     * em todos os artefatos carregados.
+     *
+     * @version 2.3 - Corrigido para usar getProcessItemId() e compatível com a adição
+     * do campo 'errors' no modelo JsonReportV2.Coach.
+     */
+    public void runAnalysis() {
+        if (loader == null || loader.getCacheDeArtefatos() == null) {
+            System.err.println("ERRO: O loader ou o cache de artefatos não foi inicializado no JsonCoachNavigatorV2.");
+            return;
+        }
+        Collection<Object> artifactsToProcess = new ArrayList<>(loader.getCacheDeArtefatos().values());
+
+        for (Object artifactObj : artifactsToProcess) {
+            if (artifactObj instanceof Teamworks) {
+                Teamworks tw = (Teamworks) artifactObj;
+                if (tw.getProcess() != null) {
+
+                    // Lógica para Coaches em Serviços Legados (baseado em 'item')
+                    if (tw.getProcess().getItems() != null) {
+                        tw.getProcess().getItems().forEach(item -> {
+                            if ("CoachNG".equalsIgnoreCase(item.getTWComponentName())) {
+                                try {
+                                    processLegacyCoach(item, tw.getProcess());
+                                } catch (Exception e) {
+                                    String coachName = (item.getName() != null) ? item.getName() : "Nome Desconhecido";
+                                    // CORREÇÃO FINAL: Usando o método correto getProcessItemId() da classe Item
+                                    String coachId = (item.getProcessItemId() != null) ? item.getProcessItemId() : "ID Desconhecido";
+
+                                    System.err.println("ERRO: Falha ao parsear layout do Coach legado: '" + coachName + "' (ID: " + coachId + "). O erro foi: " + e.getMessage());
+
+                                    JsonReportV2.Coach failedCoachReport = new JsonReportV2.Coach();
+                                    failedCoachReport.setCoachId(coachId);
+                                    failedCoachReport.setCoachName(coachName + " [FALHA NO PARSE]");
+                                    // Esta linha vai funcionar após a alteração na Parte 2
+                                    failedCoachReport.getErrors().add("Ocorreu uma exceção ao processar o layout deste Coach: " + e.getMessage());
+                                    this.generator.getReport().getUiReport().getCoaches().add(failedCoachReport);
+                                }
+                            }
+                        });
+                    }
+
+                    // Lógica para Coaches Modernos (Client-Side, baseado em 'coachflow')
+                    if (tw.getProcess().getCoachflow() != null && tw.getProcess().getCoachflow().getDefinitions() != null) {
+                        try {
+                            processModernCoach(tw.getProcess(), tw.getProcess().getCoachflow().getDefinitions());
+                        } catch (Exception e) {
+                            String processName = (tw.getManagedAsset() != null && tw.getManagedAsset().getName() != null) ? tw.getManagedAsset().getName() : "Nome Desconhecido";
+                            System.err.println("ERRO: Falha ao processar CoachFlow moderno no processo: '" + processName + "'. O erro foi: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
         processDiscoveredCoachViews();
     }
 

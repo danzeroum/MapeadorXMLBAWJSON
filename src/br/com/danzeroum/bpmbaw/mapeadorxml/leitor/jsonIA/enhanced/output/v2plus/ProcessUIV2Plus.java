@@ -81,7 +81,17 @@ public class ProcessUIV2Plus {
         private List<String> events;
         @JsonProperty("children") // Garante que será serializado no JSON
         private List<String> children; // Lista de IDs dos componentes filhos
+        @JsonProperty("binding")
+        private String binding; // A que variável o componente está ligado
 
+        // Adicione getter e setter
+        public String getBinding() {
+            return binding;
+        }
+
+        public void setBinding(String binding) {
+            this.binding = binding;
+        }
         public UIComponentV2Plus() {
             this.properties = new HashMap<String, Object>();
             this.events = new ArrayList<String>();

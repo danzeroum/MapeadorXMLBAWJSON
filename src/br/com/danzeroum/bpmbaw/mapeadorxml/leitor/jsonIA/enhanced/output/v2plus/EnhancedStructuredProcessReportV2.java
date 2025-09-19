@@ -126,6 +126,29 @@ public class EnhancedStructuredProcessReportV2 {
     @JsonProperty("issues")
     private List<AnalysisIssue> issues;
 
+
+    @JsonProperty("environmentVariablesUsed")
+    private List<ExternalResourceV2Plus> environmentVariablesUsed = new ArrayList<>();
+
+    @JsonProperty("resourceBundlesUsed")
+    private List<ExternalResourceV2Plus> resourceBundlesUsed = new ArrayList<>();
+
+
+    public List<ExternalResourceV2Plus> getEnvironmentVariablesUsed() {
+        return environmentVariablesUsed;
+    }
+
+    public void setEnvironmentVariablesUsed(List<ExternalResourceV2Plus> environmentVariablesUsed) {
+        this.environmentVariablesUsed = environmentVariablesUsed;
+    }
+
+    public List<ExternalResourceV2Plus> getResourceBundlesUsed() {
+        return resourceBundlesUsed;
+    }
+
+    public void setResourceBundlesUsed(List<ExternalResourceV2Plus> resourceBundlesUsed) {
+        this.resourceBundlesUsed = resourceBundlesUsed;
+    }
     // =========================================================================
     // CAMPOS V2 REMOVIDOS (BREAKING CHANGES)
     // =========================================================================
