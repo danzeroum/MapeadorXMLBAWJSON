@@ -195,8 +195,8 @@ run_analysis() {
     CLASSPATH=$(build_classpath)
     
     echo "Available execution modes:"
-    echo "1. Default (Gestao_de_Recondicionamentos)"
-    echo "2. Click2Check"
+    echo "1. Default (MeuProcessoBPM)"
+    echo "2. OutroProjeto"
     echo "3. Test mode"
     echo "4. Custom parameters"
     
@@ -211,7 +211,7 @@ run_analysis() {
                  "$MAIN_CLASS"
             ;;
         2)
-            echo "Running Click2Check analysis..."
+            echo "Running alternative project analysis..."
             java -cp "$CLASSPATH" \
                  -Xmx2g \
                  -Dfile.encoding=UTF-8 \

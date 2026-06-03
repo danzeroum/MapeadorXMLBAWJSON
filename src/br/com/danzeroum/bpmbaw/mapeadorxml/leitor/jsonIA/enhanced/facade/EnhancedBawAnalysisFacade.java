@@ -943,10 +943,10 @@ class EnhancedFacadeUsageExample {
 
         try {
             AnalysisConfig config = AnalysisConfig.builder()
-                    .projectName("Gestao_de_Recondicionamentos_Caetano_Retail")
-                    .processId("25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187")
-                    .activityName("Recondicionamentos - Novo pedido")
-                    .extractionPath("C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail")
+                    .projectName("MeuProcessoBPM")
+                    .processId("<SEU-PROCESS-ID>")
+                    .activityName("<NOME-DO-PROCESSO>")
+                    .extractionPath("C:\\SeuCaminho\\SeuProjeto")
                     .outputFileName("enhanced_analysis_example.json")
                     .enableDetailedLogging(true)
                     .build();

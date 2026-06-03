@@ -17,9 +17,9 @@ public class BawAnalysisIntegrationTest {
 
     // ===== PARÂMETROS BÁSICOS INICIALIZADOS UMA ÚNICA VEZ =====
     private static final String TEST_PROJECT_NAME = "TestProject";
-    private static final String TEST_PROCESS_ID = "25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187";
-    private static final String TEST_ACTIVITY_NAME = "Recondicionamentos - Novo pedido";
-    private static final String TEST_EXTRACTION_PATH = "C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail";
+    private static final String TEST_PROCESS_ID = "<SEU-PROCESS-ID>";
+    private static final String TEST_ACTIVITY_NAME = "<NOME-DO-PROCESSO>";
+    private static final String TEST_EXTRACTION_PATH = "C:\\SeuCaminho\\SeuProjeto";
     private static final String TEST_OUTPUT_BASE_NAME = "test_output.json";
     private static final String TEST_TWX_FILE = "test.twx";
     private static final int DEFAULT_ROOT_VIEW_DEPTH = 2;

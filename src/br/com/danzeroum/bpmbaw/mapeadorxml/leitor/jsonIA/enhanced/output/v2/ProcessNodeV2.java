@@ -45,7 +45,7 @@ public class ProcessNodeV2 {
 
         // Aceitar vários formatos:
         // - URN format: urn:pv:node:name:version
-        // - UUID format: 25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187
+        // - UUID format: 25.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         // - Formato IBM BAW: números com pontos e hífens
         // - IDs simples: qualquer string não vazia
 

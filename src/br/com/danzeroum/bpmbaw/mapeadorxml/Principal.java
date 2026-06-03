@@ -27,8 +27,8 @@ import static br.com.danzeroum.bpmbaw.mapeadorxml.util.FormatadorDeDataUtil.getT
 public class Principal {
 
     // --- CONFIGURE SEUS CAMINHOS AQUI ---
-   // private static final String CAMINHO_EXTRACAO_TWX = "C:\\CodigoJava\\MapeadorXmlBAW\\Gestao_de_Recondicionamentos_Caetano_Retail";
-    private static final String CAMINHO_EXTRACAO_TWX = "C:\\CodigoJava\\MapeadorXmlBAW\\Click2Check38";
+   // private static final String CAMINHO_EXTRACAO_TWX = "C:\\SeuCaminho\\SeuProjeto";
+    private static final String CAMINHO_EXTRACAO_TWX = "C:\\SeuCaminho\\SeuProjeto";
     private static final String PASTA_SAIDA = "saida";
     // Conjunto de nomes de Coach Views padrão (serão tratados como “de sistema”)
     private static final Set<String> NOMES_PADRAO = new HashSet<>(Arrays.asList(
@@ -64,8 +64,8 @@ public class Principal {
         String CAMINHO_EXTRACAO_TWX = "";
         String saida                = "";
 
-        processoId = "25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187"; nomeAtividade =  "Recondicionamentos - Novo pedido" ;    nomeProjetoAnalisar = "Gestao_de_Recondicionamentos_Caetano_Retail"; CAMINHO_EXTRACAO_TWX = "C:\\CodigoJava\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoLegado_V2plus.json";
-       // processoId = "25.acb58aeb-77bd-432b-93c4-e9dd1cb80991"; nomeAtividade = "Processo Pedido Recondicionamento";  nomeProjetoAnalisar = "Click2Check412";CAMINHO_EXTRACAO_TWX = "C:\\CodigoJava\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoRefatorado_V2plus.json";
+        processoId = "<SEU-PROCESS-ID>"; nomeAtividade = "<NOME-DO-PROCESSO>"; nomeProjetoAnalisar = "MeuProcessoBPM"; CAMINHO_EXTRACAO_TWX = "C:\\SeuCaminho\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoLegado_V2plus.json";
+       // processoId = "<OUTRO-PROCESS-ID>"; nomeAtividade = "<OUTRO-PROCESSO>"; nomeProjetoAnalisar = "OutroProjeto"; CAMINHO_EXTRACAO_TWX = "C:\\SeuCaminho\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoRefatorado_V2plus.json";
 
         //String arquivoDeSaida = PASTA_SAIDA + File.separator +getTimestampAtualFormatado()+ "_relatorioIa_nomeAtividade-" + nomeAtividade + "_projeto-"  +nomeProjetoAnalisar+ ".json";
         String arquivoDeSaida = PASTA_SAIDA + File.separator +saida;
@@ -147,8 +147,8 @@ public class Principal {
         String CAMINHO_EXTRACAO_TWX = "";
         String saida                = "";
 
-        processoId = "25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187"; nomeAtividade =  "Recondicionamentos - Novo pedido" ;    nomeProjetoAnalisar = "Gestao_de_Recondicionamentos_Caetano_Retail"; CAMINHO_EXTRACAO_TWX = "C:\\CodigoJava\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoLegado_V2.json";
-        //processoId = "25.acb58aeb-77bd-432b-93c4-e9dd1cb80991"; nomeAtividade = "Processo Pedido Recondicionamento";  nomeProjetoAnalisar = "Click2Check412";CAMINHO_EXTRACAO_TWX = "C:\\CodigoJava\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoRefatorado_V2.json";
+        processoId = "<SEU-PROCESS-ID>"; nomeAtividade = "<NOME-DO-PROCESSO>"; nomeProjetoAnalisar = "MeuProcessoBPM"; CAMINHO_EXTRACAO_TWX = "C:\\SeuCaminho\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoLegado_V2.json";
+        //processoId = "<OUTRO-PROCESS-ID>"; nomeAtividade = "<OUTRO-PROCESSO>"; nomeProjetoAnalisar = "OutroProjeto"; CAMINHO_EXTRACAO_TWX = "C:\\SeuCaminho\\Projetos"+ File.separator + nomeProjetoAnalisar; saida = getTimestampAtualFormatado() +"processoRefatorado_V2.json";
 
         //String arquivoDeSaida = PASTA_SAIDA + File.separator +getTimestampAtualFormatado()+ "_relatorioIa_nomeAtividade-" + nomeAtividade + "_projeto-"  +nomeProjetoAnalisar+ ".json";
         String arquivoDeSaida = PASTA_SAIDA + File.separator +saida;

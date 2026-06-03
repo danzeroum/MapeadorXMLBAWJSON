@@ -623,9 +623,9 @@ public class ProcessOutputMappingV2Plus {
     }
 
     /**
-     * Criar mappings específicos para Caetano Retail
+     * Criar mappings de exemplo
      */
-    public static List<ProcessOutputMappingV2Plus> createCaetanoRetailMappings() {
+    public static List<ProcessOutputMappingV2Plus> createExampleMappings() {
         List<ProcessOutputMappingV2Plus> mappings = new ArrayList<ProcessOutputMappingV2Plus>();
 
         // Orçamento final
@@ -741,16 +741,16 @@ public class ProcessOutputMappingV2Plus {
             }
             System.out.println("✅ Sample mappings: PASSED");
 
-            // Teste 7: Caetano Retail specific
-            List<ProcessOutputMappingV2Plus> caetanoMappings = createCaetanoRetailMappings();
-            assert !caetanoMappings.isEmpty() : "Should create Caetano mappings";
-            assert caetanoMappings.size() >= 3 : "Should have multiple Caetano mappings";
+            // Teste 7: Example mappings
+            List<ProcessOutputMappingV2Plus> caetanoMappings = createExampleMappings();
+            assert !caetanoMappings.isEmpty() : "Should create example mappings";
+            assert caetanoMappings.size() >= 3 : "Should have multiple example mappings";
 
             for (ProcessOutputMappingV2Plus caetanoMapping : caetanoMappings) {
                 List<String> caetanoErrors = caetanoMapping.validate();
-                assert caetanoErrors.isEmpty() : "Caetano mapping should be valid: " + caetanoErrors;
+                assert caetanoErrors.isEmpty() : "Example mapping should be valid: " + caetanoErrors;
             }
-            System.out.println("✅ Caetano Retail mappings: PASSED");
+            System.out.println("✅ Example mappings: PASSED");
 
             System.out.println("🎉 All ProcessOutputMappingV2Plus tests passed!");
 
