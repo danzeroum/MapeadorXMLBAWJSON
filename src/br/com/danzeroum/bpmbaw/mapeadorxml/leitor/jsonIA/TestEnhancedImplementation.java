@@ -18,9 +18,9 @@ public class TestEnhancedImplementation {
         try {
             AnalysisConfig config = AnalysisConfig.builder()
                     .projectName("Test_Basic")
-                    .processId("25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187")
+                    .processId("<SEU-PROCESS-ID>")
                     .activityName("Test Process")
-                    .extractionPath("C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail")
+                    .extractionPath("C:\\SeuCaminho\\SeuProjeto")
                     .outputFileName("test_basic_enhanced.json")
                     .enableDetailedLogging(true)
                     .build();
@@ -41,9 +41,9 @@ public class TestEnhancedImplementation {
 
             AnalysisConfig config = AnalysisConfig.builder()
                     .projectName("Test_Enhanced")
-                    .processId("25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187")
+                    .processId("<SEU-PROCESS-ID>")
                     .activityName("Enhanced Test")
-                    .extractionPath("C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail")
+                    .extractionPath("C:\\SeuCaminho\\SeuProjeto")
                     .outputFileName("test_enhanced_features.json")
                     .enableDetailedLogging(true)
                     .build();

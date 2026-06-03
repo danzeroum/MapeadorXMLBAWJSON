@@ -117,10 +117,10 @@ ImprovedBawAnalysisMain.executeJsonReportGeneration(config);
 #### **Configuração Completa**
 ```java
 AnalysisConfig config = AnalysisConfig.builder()
-    .projectName("Gestao_de_Recondicionamentos")
-    .processId("1.bb9e4380-1a35-4777-9cf8-4eecf125d679")
-    .activityName("Recondicionamentos - Novo pedido")
-    .extractionPath("C:\\Projects\\Gestao_Recondicionamentos")
+    .projectName("MeuProcessoBPM")
+    .processId("<SEU-PROCESS-ID>")
+    .activityName("<NOME-DO-PROCESSO>")
+    .extractionPath("C:\\SeuCaminho\\SeuProjeto")
     .outputFileName("processo_v3.json")
     .outputDirectory("output")
     .rootViewDepth(2)                    // Profundidade de subprocessos

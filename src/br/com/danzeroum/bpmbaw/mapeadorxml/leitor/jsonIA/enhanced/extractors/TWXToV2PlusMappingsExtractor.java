@@ -781,10 +781,10 @@ public class TWXToV2PlusMappingsExtractor {
     }
 
     /**
-     * Método utilitário para criar mappings específicos do projeto Caetano Retail
+     * Método utilitário para criar mappings de exemplo
      */
-    public static ProcessMappingsV2Plus createCaetanoRetailMappings() {
-        System.out.println("   🚗 Creating Caetano Retail specific mappings...");
+    public static ProcessMappingsV2Plus createExampleMappings() {
+        System.out.println("   Creating example mappings...");
 
         ProcessMappingsV2Plus mappings = new ProcessMappingsV2Plus();
 
@@ -832,8 +832,8 @@ public class TWXToV2PlusMappingsExtractor {
         // Configurar linguagem
         mappings.setExprLang("twx");
 
-        System.out.println("   ✅ Created " + mappings.getInputs().size() + " Caetano Retail input mappings");
-        System.out.println("   ✅ Created " + mappings.getOutputs().size() + " Caetano Retail output mappings");
+        System.out.println("   ✅ Created " + mappings.getInputs().size() + " example input mappings");
+        System.out.println("   ✅ Created " + mappings.getOutputs().size() + " example output mappings");
 
         return mappings;
     }
@@ -994,12 +994,12 @@ public class TWXToV2PlusMappingsExtractor {
             assert !defaultMappings.getOutputs().isEmpty() : "Should have output mappings";
             System.out.println("✅ Default mappings test passed");
 
-            // Teste 2: Mappings Caetano Retail
-            ProcessMappingsV2Plus caetanoMappings = createCaetanoRetailMappings();
-            assert caetanoMappings != null : "Caetano mappings should not be null";
+            // Teste 2: Mappings de exemplo
+            ProcessMappingsV2Plus caetanoMappings = createExampleMappings();
+            assert caetanoMappings != null : "Example mappings should not be null";
             assert !caetanoMappings.getInputs().isEmpty() : "Should have input mappings";
             assert !caetanoMappings.getOutputs().isEmpty() : "Should have output mappings";
-            System.out.println("✅ Caetano Retail mappings test passed");
+            System.out.println("✅ Example mappings test passed");
 
             // Teste 3: Validação
             boolean isValid = validateMappings(defaultMappings);

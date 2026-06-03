@@ -763,8 +763,8 @@ public class ImprovedBawAnalysisMain {
     // Main simplificado para testar apenas o debug
     public static void main(String[] args) {
         try {
-            String basePath = "C:\\CodigoJava\\Projetos\\Gestao_de_Recondicionamentos_Caetano_Retail";
-            String fullPath = basePath + "\\Gestao_de_Recondicionamentos_Caetano_Retail";
+            String basePath = "C:\\SeuCaminho\\SeuProjeto";
+            String fullPath = basePath + "\\SeuProjeto";
 
             String correctPath = null;
             if (new File(fullPath).exists() && new File(fullPath).isDirectory()) {
@@ -781,12 +781,12 @@ public class ImprovedBawAnalysisMain {
             // Descomente se debug mostrar sucesso
 
         AnalysisConfig config = AnalysisConfig.builder()
-                .projectName("Gestao_de_Recondicionamentos_Caetano_Retail")
-                .processId("25.ff08e50c-7c7e-4e9b-93f9-74d64ae97187")
-                .activityName("Recondicionamentos - Novo pedido")
+                .projectName("MeuProcessoBPM")
+                .processId("<SEU-PROCESS-ID>")
+                .activityName("<NOME-DO-PROCESSO>")
                 .extractionPath(correctPath)
                 .outputFileName(BawAnalysisConfig.generateTimestamp() + "_processoLegado_v3.json")
-                .outputDirectory("C:\\CodigoJava\\MapeadorXMLBAWJSON\\output")
+                .outputDirectory(".\\output")
                 .rootViewDepth(1)
                 .enableDetailedLogging(true)
                 .build();
