@@ -33,17 +33,35 @@ public class IntegrityManifest {
     }
 
     private static String calculateSectionChecksum(Object section) {
-        // Implementation would use Jackson + SHA-256
-        // Placeholder for actual implementation
-        if (section == null) {
-            return "sha256-null";
+        if (section == null) return "sha256-null";
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            byte[] json = mapper.writeValueAsBytes(section);
+            java.security.MessageDigest sha = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = sha.digest(json);
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) hex.append(String.format("%02x", b));
+            return "sha256-" + hex;
+        } catch (Exception e) {
+            return "sha256-error";
         }
-        return "sha256-" + Integer.toHexString(section.hashCode());
     }
 
     private static String calculateOverallChecksum(Map<String, String> sections) {
-        // Implementation would combine all section checksums
-        return "sha256-" + Integer.toHexString(sections.hashCode());
+        try {
+            // Deterministic: sort keys before hashing
+            StringBuilder combined = new StringBuilder();
+            sections.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> combined.append(e.getKey()).append(":").append(e.getValue()).append(";"));
+            java.security.MessageDigest sha = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = sha.digest(combined.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) hex.append(String.format("%02x", b));
+            return "sha256-" + hex;
+        } catch (Exception e) {
+            return "sha256-error";
+        }
     }
 
     // Getters and setters

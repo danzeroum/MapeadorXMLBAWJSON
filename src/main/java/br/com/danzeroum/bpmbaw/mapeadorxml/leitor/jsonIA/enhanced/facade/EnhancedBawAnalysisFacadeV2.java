@@ -198,8 +198,8 @@ public class EnhancedBawAnalysisFacadeV2 {
                 addAnalysisIssue("Process graph has no nodes", "processGraph.nodes", IssueSeverity.ERROR);
             }
 
-            // Verificar ciclos (método simulado)
-            boolean hasCycles = simulateHasCycles(graph);
+            // Verificar ciclos usando DFS
+            boolean hasCycles = hasCycles(graph);
             if (hasCycles) {
                 addAnalysisIssue("Process graph contains cycles", "processGraph", IssueSeverity.INFO);
             }
@@ -280,7 +280,8 @@ public class EnhancedBawAnalysisFacadeV2 {
         DigitalSignature signature = new DigitalSignature();
         signature.setTimestamp(Instant.now().toString());
         signature.setSignerIdentity("EnhancedBawAnalysisFacadeV2");
-        signature.setSignature("mock-signature-" + System.currentTimeMillis());
+        String overallChecksum = integrity.getOverallChecksum() != null ? integrity.getOverallChecksum() : "";
+        signature.setSignature("content-hash-" + Integer.toHexString(overallChecksum.hashCode()));
         integrity.setSignature(signature);
 
         report.setIntegrity(integrity);
@@ -551,19 +552,36 @@ public class EnhancedBawAnalysisFacadeV2 {
     }
 
     /**
-     * Simula detecção de ciclos no grafo (implementação placeholder)
+     * Detecta ciclos no grafo usando DFS com coloração de vértices.
      */
-    private boolean simulateHasCycles(ProcessGraphV2 graph) {
-        // Implementação simplificada - em produção usar algoritmo DFS
-        if (graph.getEdges() == null || graph.getNodes() == null) {
-            return false;
+    private boolean hasCycles(ProcessGraphV2 graph) {
+        if (graph == null || graph.getNodes() == null || graph.getEdges() == null) return false;
+        // Build adjacency list
+        Map<String, List<String>> adj = new HashMap<>();
+        for (ProcessEdgeV2 edge : graph.getEdges()) {
+            if (edge.getSource() != null && edge.getTarget() != null) {
+                adj.computeIfAbsent(edge.getSource(), k -> new ArrayList<>()).add(edge.getTarget());
+            }
         }
+        // DFS with coloring: 0=unvisited, 1=in-stack, 2=done
+        Map<String, Integer> color = new HashMap<>();
+        for (ProcessNodeV2 node : graph.getNodes()) {
+            if (color.getOrDefault(node.getId(), 0) == 0) {
+                if (dfsCycleCheck(node.getId(), adj, color)) return true;
+            }
+        }
+        return false;
+    }
 
-        // Se há mais edges que nodes-1, provavelmente há ciclos
-        int nodeCount = graph.getNodes().size();
-        int edgeCount = graph.getEdges().size();
-
-        return edgeCount >= nodeCount; // Heurística simples
+    private boolean dfsCycleCheck(String nodeId, Map<String, List<String>> adj, Map<String, Integer> color) {
+        color.put(nodeId, 1);
+        for (String neighbor : adj.getOrDefault(nodeId, Collections.emptyList())) {
+            int neighborColor = color.getOrDefault(neighbor, 0);
+            if (neighborColor == 1) return true;
+            if (neighborColor == 0 && dfsCycleCheck(neighbor, adj, color)) return true;
+        }
+        color.put(nodeId, 2);
+        return false;
     }
 
     /**
@@ -1561,7 +1579,7 @@ public class EnhancedBawAnalysisFacadeV2 {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
 
-            ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getProcessId());
+            ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getExtractionPath());
 
             // Carregar processo na memória
             loader.loadProcessInMemory(config.getProcessId());

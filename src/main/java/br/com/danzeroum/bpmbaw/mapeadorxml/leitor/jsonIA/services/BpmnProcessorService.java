@@ -22,6 +22,8 @@ import java.util.*;
  * Processes modern BPMN Definitions artifacts.
  */
 public class BpmnProcessorService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BpmnProcessorService.class);
+
     private final JsonReportGeneratorV2 generator;
     private final ProcessLoaderV2Plus loader;
     private final VariableEnricherService variableEnricher;
@@ -97,7 +99,9 @@ public class BpmnProcessorService {
             if (loc != null && loc.objectInfo != null && loc.objectInfo.getName() != null) {
                 return loc.objectInfo.getName();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("[resolveParticipantName] ignored error: {}", e.getMessage());
+        }
         return null;
     }
 
@@ -333,7 +337,8 @@ public class BpmnProcessorService {
                         }
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warn("[mapNodeToLaneNames] ignored error resolving getFlowNodeRefs: {}", e.getMessage());
                 // Try alternative method names
                 String[] methodNames = {"getFlowNodeRefIds", "getFlowNodes", "getNodeRefs"};
                 for (String methodName : methodNames) {
@@ -347,7 +352,9 @@ public class BpmnProcessorService {
                             }
                             break;
                         }
-                    } catch (Exception ignored2) {}
+                    } catch (Exception e2) {
+                        log.warn("[mapNodeToLaneNames] ignored error resolving alternative lane method {}: {}", methodName, e2.getMessage());
+                    }
                 }
             }
         }

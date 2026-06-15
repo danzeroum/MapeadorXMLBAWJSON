@@ -142,7 +142,7 @@ public class AIReadinessScoreV2 {
 
     private static double calculateComplexityScore(ProcessGraphV2 graph) {
         if (graph == null || graph.getNodes() == null || graph.getNodes().isEmpty()) {
-            return 100.0; // Simple processes get high score
+            return 0.0; // Empty graph means extraction failed or process is empty
         }
 
         // Calcular complexidade ciclomática baseada em decisões
@@ -150,10 +150,11 @@ public class AIReadinessScoreV2 {
         int totalNodes = graph.getNodes().size();
 
         for (ProcessNodeV2 node : graph.getNodes()) {
-            if (node.getType() != null &&
-                    (node.getType().toString().contains("Gateway") ||
-                            node.getType().toString().contains("Decision"))) {
-                decisionNodes++;
+            if (node.getType() != null) {
+                String typeStr = node.getType().toString().toUpperCase();
+                if (typeStr.contains("GATEWAY") || typeStr.contains("DECISION")) {
+                    decisionNodes++;
+                }
             }
         }
 

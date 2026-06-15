@@ -12,6 +12,8 @@ import br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Pool;
  * Processes legacy BPD artifacts.
  */
 public class BpdProcessorService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BpdProcessorService.class);
+
     private final JsonReportGeneratorV2 generator;
     private final ProcessLoaderV2Plus loader;
 
@@ -48,7 +50,8 @@ public class BpdProcessorService {
             if (loc != null && loc.objectInfo != null && loc.objectInfo.getName() != null) {
                 return loc.objectInfo.getName();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("[resolveParticipantName] ignored error: {}", e.getMessage());
         }
         return null;
     }

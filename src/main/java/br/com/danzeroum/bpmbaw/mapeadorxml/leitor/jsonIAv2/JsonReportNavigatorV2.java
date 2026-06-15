@@ -23,6 +23,8 @@ import java.util.*;
  */
 public class JsonReportNavigatorV2 {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JsonReportNavigatorV2.class);
+
     private final JsonReportGeneratorV2 generator;
     private final ProcessLoaderV2Plus loader;
 
@@ -588,7 +590,9 @@ public class JsonReportNavigatorV2 {
             if (loc != null && loc.objectInfo != null && loc.objectInfo.getName() != null) {
                 return loc.objectInfo.getName();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("[resolveParticipantName] ignored error: {}", e.getMessage());
+        }
         return null;
     }
 
