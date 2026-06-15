@@ -4,6 +4,8 @@
 /build/
 /dist/
 /target/
+baw-motor/target/
+baw-api/target/
 *.class
 .idea/
 *.iml

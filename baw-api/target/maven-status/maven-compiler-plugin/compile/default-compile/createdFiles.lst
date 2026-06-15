@@ -1,0 +1,12 @@
+br/com/danzeroum/processveritas/domain/model/UserEntity.class
+br/com/danzeroum/processveritas/domain/model/UserEntity$Role.class
+br/com/danzeroum/processveritas/config/SecurityConfig.class
+br/com/danzeroum/processveritas/domain/repository/UserRepository.class
+br/com/danzeroum/processveritas/domain/repository/RunRepository.class
+br/com/danzeroum/processveritas/domain/model/ReportEntity.class
+br/com/danzeroum/processveritas/config/AsyncConfig.class
+br/com/danzeroum/processveritas/domain/model/RunEntity.class
+br/com/danzeroum/processveritas/domain/model/RunEntity$RunStatus.class
+br/com/danzeroum/processveritas/motor/BawMotorAdapter.class
+br/com/danzeroum/processveritas/ProcessVeritasApplication.class
+br/com/danzeroum/processveritas/domain/repository/ReportRepository.class
