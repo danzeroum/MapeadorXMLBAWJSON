@@ -1,6 +1,9 @@
 package br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.facade;
 
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.ProcessLoaderV2Plus;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.BpdGraphExtractor;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.extractors.BpmnGraphExtractor;
+import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.factory.ProvenanceFactory;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2.*;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.enhanced.output.v2.AnalysisIssue.IssueSeverity;
 import br.com.danzeroum.bpmbaw.mapeadorxml.leitor.jsonIA.config.AnalysisConfig;
@@ -448,50 +451,11 @@ public class EnhancedBawAnalysisFacadeV2 {
     }
 
     private String generateReportId(AnalysisConfig config) {
-        // Gerar ID no formato URN válido: urn:pv:[type]:[name]:[version]
-        String processIdNormalized = config.getProcessId().toLowerCase().replaceAll("[^a-z0-9]", "-");
-        String projectNormalized = config.getProjectName().toLowerCase().replaceAll("[^a-z0-9]", "-");
-
-        // Formato: urn:pv:report:[project-process]:[version]
-        return "urn:pv:report:" + projectNormalized + "-" + processIdNormalized + ":2";
+        return ProvenanceFactory.generateReportId(config);
     }
 
     private ProvenanceV2 createProvenance(AnalysisConfig config) {
-        ProvenanceV2 provenance = new ProvenanceV2();
-        provenance.setDeterministicRunId(generateDeterministicRunId(config));
-
-        // Criar tool information
-        ProvenanceV2.ToolInformation tool = new ProvenanceV2.ToolInformation();
-        tool.setName("EnhancedBawAnalysisFacadeV2");
-        tool.setVersion(VERSION);
-        tool.setJavaVersion(System.getProperty("java.version"));
-        provenance.setTool(tool);
-
-        // Criar source information
-        ProvenanceV2.SourceInformation source = new ProvenanceV2.SourceInformation();
-        source.setExtractionPath(config.getExtractionPath());
-        source.setTwxFile(config.getProjectName() + ".twx");
-        provenance.setSource(source);
-
-        // Criar pipeline information
-        ProvenanceV2.PipelineInformation pipeline = new ProvenanceV2.PipelineInformation();
-        pipeline.setId("ai-trustworthy-analysis");
-        pipeline.setSteps(Arrays.asList(
-                "Structure Analysis",
-                "Security Analysis",
-                "AI Readiness Calculation",
-                "Index Creation",
-                "Integrity Verification"
-        ));
-        provenance.setPipeline(pipeline);
-
-        return provenance;
-    }
-
-    private String generateDeterministicRunId(AnalysisConfig config) {
-        // Gerar ID determinístico baseado na configuração
-        String input = config.getProjectName() + config.getProcessId() + config.getExtractionPath();
-        return "run-" + Math.abs(input.hashCode());
+        return ProvenanceFactory.createProvenance(config);
     }
 
     private boolean isValidProcessId(String processId) {
@@ -1652,7 +1616,7 @@ public class EnhancedBawAnalysisFacadeV2 {
         }
         // Verificar se é Process (Service)
         else if (teamworks.getProcess() != null) {
-            extractFromLegacyProcess(teamworks.getProcess(), graph);
+            BpdGraphExtractor.extractFromTeamworksProcess(teamworks.getProcess(), graph, new ProcessLogicV2());
         }
 
         return graph;
@@ -1662,193 +1626,7 @@ public class EnhancedBawAnalysisFacadeV2 {
      * Extrair nodes e edges do BPD
      */
     private void extractFromBpd(Teamworks teamworks, ProcessGraphV2 graph) {
-        if (teamworks.getBpd() == null || teamworks.getBpd().getBusinessProcessDiagram() == null) {
-            return;
-        }
-
-        BusinessProcessDiagram bpd = teamworks.getBpd().getBusinessProcessDiagram();
-
-        // *** CORREÇÃO 1: Melhorar extração de FlowObjects ***
-        List<FlowObject> allFlowObjects = new ArrayList<>();
-        if (bpd.getPools() != null) {
-            for (Pool pool : bpd.getPools()) {
-                if (pool.getLanes() != null) {
-                    for (Lane lane : pool.getLanes()) {
-                        if (lane.getFlowObjects() != null) {
-                            allFlowObjects.addAll(lane.getFlowObjects());
-                        }
-                    }
-                }
-            }
-        }
-
-        // Extrair nós (mantém lógica existente)
-        for (FlowObject flowObject : allFlowObjects) {
-            try {
-                ProcessNodeV2 node = convertFlowObjectToNodeV2(flowObject);
-                if (node != null) {
-                    graph.addNode(node);
-                }
-            } catch (Exception e) {
-                System.err.println("⚠️ Erro ao converter FlowObject para nó: " + e.getMessage());
-            }
-        }
-
-        // *** CORREÇÃO 2: Extração de edges usando abordagem da V1 ***
-        if (bpd.getFlows() != null && !bpd.getFlows().isEmpty()) {
-            System.out.println("🔗 Processando " + bpd.getFlows().size() + " flows do BPD...");
-
-            // Primeiro, mapear flows para FlowObjects usando a lógica da V1
-            Map<String, List<Flow>> sourceToFlowsMap = buildLegacyBpdLinkMap(bpd.getFlows(), allFlowObjects);
-
-            int edgeCount = 0;
-            for (Flow flow : bpd.getFlows()) {
-                try {
-                    // Usar a lógica corrigida para extrair source/target
-                    if (flow.getSourceObjectId() != null && flow.getTargetObjectId() != null) {
-                        ProcessEdgeV2 edge = ProcessEdgeV2.create(
-                                flow.getId() != null ? flow.getId() : "edge-" + System.currentTimeMillis(),
-                                flow.getSourceObjectId(),
-                                flow.getTargetObjectId()
-                        );
-
-                        edge.setLabel(flow.getName());
-                        edge.setType(ProcessEdgeV2.EdgeType.SEQUENCE_FLOW);
-
-                        graph.addEdge(edge);
-                        edgeCount++;
-
-                    } else {
-                        System.out.println("⚠️ Flow sem source/target válidos: " + flow.getId());
-                    }
-
-                } catch (Exception e) {
-                    System.err.println("Erro ao adicionar edge: " + e.getMessage());
-                    // Não parar o processamento, continuar com próximo flow
-                }
-            }
-
-            System.out.println("✅ Processados " + edgeCount + " edges com sucesso");
-        } else {
-            System.out.println("⚠️ Nenhum flow encontrado no BPD");
-        }
-    }
-
-    private Map<String, List<Flow>> buildLegacyBpdLinkMap(List<Flow> flows, List<FlowObject> allFlowObjects) {
-        if (flows == null || allFlowObjects == null) {
-            return new HashMap<>();
-        }
-
-        // Mapeia cada Flow para seu objeto de origem e destino
-        for (Flow flow : flows) {
-            for (FlowObject fo : allFlowObjects) {
-                // Encontra a origem da seta
-                if (fo.getOutputPorts() != null) {
-                    for (OutputPort port : fo.getOutputPorts()) {
-                        if (port.getFlow() != null && flow.getId().equals(port.getFlow().getRef())) {
-                            flow.setSourceObjectId(fo.getId());
-                            break;
-                        }
-                    }
-                }
-
-                // Encontra o destino da seta
-                if (fo.getInputPorts() != null) {
-                    for (InputPort port : fo.getInputPorts()) {
-                        if (port.getFlow() != null && flow.getId().equals(port.getFlow().getRef())) {
-                            flow.setTargetObjectId(fo.getId());
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Agrupa as setas pelo ID de seu objeto de origem
-        Map<String, List<Flow>> result = new HashMap<>();
-        for (Flow flow : flows) {
-            if (flow.getSourceObjectId() != null) {
-                result.computeIfAbsent(flow.getSourceObjectId(), k -> new ArrayList<>()).add(flow);
-            }
-        }
-
-        return result;
-    }
-
-
-
-    /**
-     * Extrair nodes e edges do Process legacy
-     */
-    private void extractFromLegacyProcess(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Process process, ProcessGraphV2 graph) {
-        // Extrair Items como Nodes
-        if (process.getItems() != null) {
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item item : process.getItems()) {
-                ProcessNodeV2 node = convertItemToNodeV2(item);
-                if (node != null) {
-                    try {
-                        graph.addNode(node);
-                    } catch (Exception e) {
-                        System.err.println("Erro ao adicionar node: " + e.getMessage());
-                    }
-                }
-            }
-        }
-
-        // Extrair Links como Edges
-        if (process.getLinks() != null) {
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Link link : process.getLinks()) {
-                ProcessEdgeV2 edge = convertLinkToEdgeV2(link);
-                if (edge != null) {
-                    try {
-                        graph.addEdge(edge);
-                    } catch (Exception e) {
-                        System.err.println("Erro ao adicionar edge: " + e.getMessage());
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Converter FlowObject para ProcessNodeV2
-     */
-    private ProcessNodeV2 convertFlowObjectToNodeV2(FlowObject flowObject) {
-        if (flowObject == null) {
-            return null;
-        }
-
-        try {
-            // Usar o método mais flexível para criação
-            ProcessNodeV2 node = ProcessNodeV2.createWithFlexibleId(
-                    flowObject.getId(),
-                    flowObject.getName(),
-                    flowObject.getComponentType()
-            );
-
-            node.setDescription(flowObject.getName());
-
-            // Adicionar propriedades adicionais se necessário
-            if (flowObject.getComponentType() != null) {
-                // Mapear propriedades específicas baseadas no tipo
-            }
-
-            return node;
-
-        } catch (Exception e) {
-            System.err.println("⚠️ Erro ao converter FlowObject para ProcessNodeV2: " + e.getMessage());
-            System.err.println("   FlowObject ID: " + flowObject.getId());
-            System.err.println("   FlowObject Name: " + flowObject.getName());
-            System.err.println("   FlowObject Type: " + flowObject.getComponentType());
-
-            // Criar nó com valores padrão em caso de erro
-            ProcessNodeV2 fallbackNode = new ProcessNodeV2();
-            fallbackNode.setId("node-" + System.currentTimeMillis()); // Definir diretamente
-            fallbackNode.setName(flowObject.getName() != null ? flowObject.getName() : "Unnamed Node");
-            fallbackNode.setType(ProcessNodeV2.NodeType.TASK); // Tipo padrão
-
-            return fallbackNode;
-        }
+        BpdGraphExtractor.extractFromBpd(teamworks, graph);
     }
 
     public ProcessEdgeV2 convertFlowToEdgeV2(FlowObject flowObject) {
@@ -1866,175 +1644,6 @@ public class EnhancedBawAnalysisFacadeV2 {
         edge.setTarget(flowObject.getTarget());
 
         return edge;
-    }
-    /**
-     * Mapear tipos de componente para NodeType
-     */
-    private ProcessNodeV2.NodeType mapComponentTypeToNodeType(String componentType) {
-        if (componentType == null) return ProcessNodeV2.NodeType.TASK;
-
-        switch (componentType.toLowerCase()) {
-            case "task":
-            case "activity":
-                return ProcessNodeV2.NodeType.TASK;
-            case "subprocess":
-                return ProcessNodeV2.NodeType.SUB_PROCESS;
-            case "gateway":
-                return ProcessNodeV2.NodeType.GATEWAY;
-            case "event":
-                return ProcessNodeV2.NodeType.START_EVENT;
-            default:
-                return ProcessNodeV2.NodeType.TASK;
-        }
-    }
-
-    /**
-     * Mapear TWComponent para NodeType
-     */
-    private ProcessNodeV2.NodeType mapTWComponentToNodeType(String twComponentName) {
-        if (twComponentName == null) return ProcessNodeV2.NodeType.TASK;
-
-        switch (twComponentName.toLowerCase()) {
-            case "script":
-            case "scripttask":
-                return ProcessNodeV2.NodeType.SCRIPT_TASK;
-            case "subprocess":
-            case "subprocesstask":
-                return ProcessNodeV2.NodeType.SUB_PROCESS;
-            case "usertask":
-            case "humantask":
-                return ProcessNodeV2.NodeType.USER_TASK;
-            case "servicetask":
-            case "service":
-                return ProcessNodeV2.NodeType.SERVICE_TASK;
-            case "gateway":
-            case "decision":
-                return ProcessNodeV2.NodeType.GATEWAY;
-            case "startevent":
-            case "start":
-                return ProcessNodeV2.NodeType.START_EVENT;
-            case "endevent":
-            case "end":
-                return ProcessNodeV2.NodeType.END_EVENT;
-            default:
-                return ProcessNodeV2.NodeType.TASK;
-        }
-    }
-
-    /**
-     * Extrair logic do Teamworks
-     */
-    private ProcessLogicV2 extractLogicFromTeamworks(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks teamworks, AnalysisConfig config) {
-        ProcessLogicV2 logic = ProcessLogicV2.create(config.getProcessId());
-
-        List<ProcessLogicV2.LogicScriptV2> scripts = new ArrayList<>();
-
-        // Extrair scripts do processo legacy
-        if (teamworks.getProcess() != null && teamworks.getProcess().getItems() != null) {
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item item : teamworks.getProcess().getItems()) {
-                if (item.getTwComponent() != null && item.getTwComponent().getScript() != null) {
-                    ProcessLogicV2.LogicScriptV2 script = new ProcessLogicV2.LogicScriptV2();
-                    script.setId("script-" + item.getProcessItemId());
-                    script.setName("Script for " + item.getName());
-                    script.setContent(item.getTwComponent().getScript());
-                    script.setLanguage(ProcessLogicV2.ScriptLanguage.JAVASCRIPT);
-                    script.setDescription("Script extracted from item: " + item.getName());
-                    scripts.add(script);
-                }
-            }
-        }
-
-        // Extrair scripts do BPD
-        if (teamworks.getBpd() != null && teamworks.getBpd().getBusinessProcessDiagram() != null) {
-            if (teamworks.getBpd().getBusinessProcessDiagram().getPools() != null) {
-                for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Pool pool : teamworks.getBpd().getBusinessProcessDiagram().getPools()) {
-                    if (pool.getLanes() != null) {
-                        for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.Lane lane : pool.getLanes()) {
-                            if (lane.getFlowObjects() != null) {
-                                for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpd.FlowObject flowObject : lane.getFlowObjects()) {
-                                    if (flowObject.getComponent() != null) {
-                                        // Verificar se Component tem script (assumindo que existe)
-                                        // Como não temos certeza dos métodos, vamos usar properties
-                                        ProcessLogicV2.LogicScriptV2 script = new ProcessLogicV2.LogicScriptV2();
-                                        script.setId("script-" + flowObject.getId());
-                                        script.setName("Script for " + flowObject.getName());
-                                        script.setContent("// Script from BPD component");
-                                        script.setLanguage(ProcessLogicV2.ScriptLanguage.JAVASCRIPT);
-                                        script.setDescription("Script extracted from BPD flow object: " + flowObject.getName());
-                                        scripts.add(script);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        logic.setScripts(scripts);
-        return logic;
-    }
-
-    /**
-     * Extrair data types do Teamworks
-     */
-    private List<DataTypeDefinitionV2> extractDataTypesFromTeamworks(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.Teamworks teamworks) {
-        List<DataTypeDefinitionV2> dataTypes = new ArrayList<>();
-
-        // Extrair variáveis do processo
-        if (teamworks.getProcess() != null) {
-            // Parâmetros do processo
-            if (teamworks.getProcess().getProcessParameters() != null) {
-                for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.ProcessParameter param : teamworks.getProcess().getProcessParameters()) {
-                    DataTypeDefinitionV2 dataType = convertParameterToDataType(param);
-                    if (dataType != null) {
-                        dataTypes.add(dataType);
-                    }
-                }
-            }
-
-            // Variáveis do processo
-            if (teamworks.getProcess().getProcessVariables() != null) {
-                for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.ProcessVariable var : teamworks.getProcess().getProcessVariables()) {
-                    DataTypeDefinitionV2 dataType = convertVariableToDataType(var);
-                    if (dataType != null) {
-                        dataTypes.add(dataType);
-                    }
-                }
-            }
-        }
-
-        return dataTypes;
-    }
-
-    /**
-     * Converter ProcessParameter para DataTypeDefinitionV2
-     */
-    private DataTypeDefinitionV2 convertParameterToDataType(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.ProcessParameter param) {
-        DataTypeDefinitionV2 dataType = new DataTypeDefinitionV2();
-
-        dataType.setId("param-" + param.getName());
-        dataType.setName(param.getName());
-        dataType.setId(param.getClassId());
-        //dataType.set(param.isArrayOf());
-        dataType.setDescription("Process parameter: " + (param.getParameterType() == 1 ? "Input" : "Output"));
-
-        return dataType;
-    }
-
-    /**
-     * Converter ProcessVariable para DataTypeDefinitionV2
-     */
-    private DataTypeDefinitionV2 convertVariableToDataType(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.ProcessVariable var) {
-        DataTypeDefinitionV2 dataType = new DataTypeDefinitionV2();
-
-        dataType.setId("var-" + var.getName());
-        dataType.setName(var.getName());
-        dataType.setId(var.getClassId());
-        //dataType.set(var.isArrayOf());
-        dataType.setDescription("Process variable");
-
-        return dataType;
     }
 
     public ProcessEdgeV2 convertFlowToEdgeV2(Flow flow) {
@@ -2132,75 +1741,49 @@ public class EnhancedBawAnalysisFacadeV2 {
         try {
             System.out.println("🔄 Extracting Teamworks data to V2 structures...");
 
-            // 1. USAR O PROCESSLOADER PARA CARREGAR RECURSIVAMENTE (COMO A V1)
             ProcessLoaderV2Plus loader = new ProcessLoaderV2Plus(config.getExtractionPath(),
                     new java.io.PrintWriter(System.out));
-
-            // 2. CARREGAR O PROCESSO E TODAS AS DEPENDÊNCIAS (IGUAL À V1)
             Map<String, Object> allArtifacts = loader.loadProcessInMemory(config.getProcessId());
 
             System.out.println("📊 Loaded artifacts cache: " + allArtifacts.size() + " artifacts");
 
-            // 3. EXTRAIR ESTRUTURAS V2 DO REPORT
             ProcessGraphV2 graph = report.getProcessGraph();
             ProcessLogicV2 logic = report.getLogic();
             List<DataTypeDefinitionV2> dataTypes = report.getDataTypes();
 
-            // Inicializar estruturas se necessário
-            if (graph == null) {
-                graph = new ProcessGraphV2();
-                report.setProcessGraph(graph);
-            }
-            if (logic == null) {
-                logic = ProcessLogicV2.create(config.getProcessId());
-                report.setLogic(logic);
-            }
-            if (dataTypes == null) {
-                dataTypes = new ArrayList<>();
-                report.setDataTypes(dataTypes);
-            }
+            if (graph == null) { graph = new ProcessGraphV2(); report.setProcessGraph(graph); }
+            if (logic == null) { logic = ProcessLogicV2.create(config.getProcessId()); report.setLogic(logic); }
+            if (dataTypes == null) { dataTypes = new ArrayList<>(); report.setDataTypes(dataTypes); }
 
-            // 4. PROCESSAR CADA ARTEFATO DO CACHE (COMO A V1 FAZ)
-            int totalNodes = 0;
-            int totalEdges = 0;
-            int totalScripts = 0;
+            int totalNodes = 0, totalEdges = 0, totalScripts = 0;
 
             for (Map.Entry<String, Object> entry : allArtifacts.entrySet()) {
                 String artifactId = entry.getKey();
                 Object artifact = entry.getValue();
-
                 System.out.println("🔍 Processing artifact: " + artifactId +
                         " (Type: " + artifact.getClass().getSimpleName() + ")");
-
                 try {
                     if (artifact instanceof Teamworks) {
                         Teamworks tw = (Teamworks) artifact;
-
-                        // Extrair do processo principal se existir
                         if (tw.getProcess() != null) {
-                            extractFromTeamworksProcess(tw.getProcess(), graph, logic);
-                            totalScripts += extractScriptsFromProcess(tw.getProcess(), logic);
+                            BpdGraphExtractor.extractFromTeamworksProcess(tw.getProcess(), graph, logic);
+                            totalScripts += BpdGraphExtractor.extractScriptsFromProcess(tw.getProcess(), logic);
                         }
-
-                        // Extrair do BPD se existir
                         if (tw.getBpd() != null) {
-                            extractFromBpd(tw, graph);
-                            totalNodes += countNodesInBpd(tw.getBpd());
-                            totalEdges += countEdgesInBpd(tw.getBpd());
+                            BpdGraphExtractor.extractFromBpd(tw, graph);
+                            totalNodes += BpdGraphExtractor.countNodesInBpd(tw.getBpd());
+                            totalEdges += BpdGraphExtractor.countEdgesInBpd(tw.getBpd());
                         }
-
                     } else if (artifact instanceof br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions) {
                         br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions def =
                                 (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.bpmn.Definitions) artifact;
-                        extractFromBpmnDefinitions(def, graph, logic);
-                        totalNodes += countNodesInDefinitions(def);
-                        totalEdges += countEdgesInDefinitions(def);
-                        totalScripts += extractScriptsFromDefinitions(def, logic);
+                        BpmnGraphExtractor.extractFromDefinitions(def, graph, logic);
+                        totalNodes += BpmnGraphExtractor.countNodes(def);
+                        totalEdges += BpmnGraphExtractor.countEdges(def);
+                        totalScripts += BpmnGraphExtractor.extractScripts(def, logic);
                     }
-
                 } catch (Exception e) {
                     System.err.println("⚠️ Erro ao processar artifact " + artifactId + ": " + e.getMessage());
-                    // Continuar processamento dos outros artifacts
                 }
             }
 
@@ -2213,189 +1796,13 @@ public class EnhancedBawAnalysisFacadeV2 {
         } catch (Exception e) {
             System.err.println("❌ Erro ao integrar com ProcessLoader: " + e.getMessage());
             e.printStackTrace();
-
-            // FALLBACK: Tentar carregar apenas o processo principal
             try {
-                loadMainProcessOnly(teamworks, report, config);
+                ProcessGraphV2 graph = report.getProcessGraph();
+                if (graph == null) { graph = new ProcessGraphV2(); report.setProcessGraph(graph); }
+                BpdGraphExtractor.extractFromBpd(teamworks, graph);
             } catch (Exception fallbackError) {
                 System.err.println("❌ Fallback também falhou: " + fallbackError.getMessage());
             }
         }
-    }
-
-    private void loadMainProcessOnly(Teamworks teamworks, EnhancedStructuredProcessReportV2 report, AnalysisConfig config) {
-        // Fallback que carrega apenas o processo principal (implementação existente)
-        System.out.println("⚠️ Usando fallback - carregando apenas processo principal");
-
-        ProcessGraphV2 graph = report.getProcessGraph();
-        if (graph == null) {
-            graph = new ProcessGraphV2();
-            report.setProcessGraph(graph);
-        }
-
-        // Usar o método extractFromBpd existente
-        extractFromBpd(teamworks, graph);
-    }
-// ===================================================================
-// MÉTODOS AUXILIARES PARA CONTAGEM E EXTRAÇÃO
-// ===================================================================
-
-    private void extractFromTeamworksProcess(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Process process,
-                                             ProcessGraphV2 graph, ProcessLogicV2 logic) {
-        if (process.getItems() != null) {
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item item : process.getItems()) {
-                try {
-                    ProcessNodeV2 node = convertItemToNodeV2(item);
-                    if (node != null) {
-                        graph.addNode(node);
-                    }
-                } catch (Exception e) {
-                    System.err.println("⚠️ Erro ao converter item: " + e.getMessage());
-                }
-            }
-        }
-
-        // Processar links como edges
-        if (process.getLinks() != null) {
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Link link : process.getLinks()) {
-                try {
-                    ProcessEdgeV2 edge = convertLinkToEdgeV2(link);
-                    if (edge != null) {
-                        graph.addEdge(edge);
-                    }
-                } catch (Exception e) {
-                    System.err.println("⚠️ Erro ao converter link: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    private void extractFromBpmnDefinitions(Definitions definitions, ProcessGraphV2 graph, ProcessLogicV2 logic) {
-        if (definitions.getProcess() != null && definitions.getProcess().getFlowElements() != null) {
-            for (Object element : definitions.getProcess().getFlowElements()) {
-                try {
-                    if (element instanceof FlowNode) {
-                        ProcessNodeV2 node = convertBpmnNodeToNodeV2((FlowNode) element);
-                        if (node != null) {
-                            graph.addNode(node);
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("⚠️ Erro ao converter BPMN node: " + e.getMessage());
-                }
-            }
-
-            // Processar sequence flows
-            if (definitions.getProcess().getSequenceFlows() != null) {
-                for (SequenceFlow sf : definitions.getProcess().getSequenceFlows()) {
-                    try {
-                        ProcessEdgeV2 edge = convertSequenceFlowToEdgeV2(sf);
-                        if (edge != null) {
-                            graph.addEdge(edge);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("⚠️ Erro ao converter sequence flow: " + e.getMessage());
-                    }
-                }
-            }
-        }
-    }
-
-    private ProcessNodeV2 convertItemToNodeV2(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item item) {
-        ProcessNodeV2 node = ProcessNodeV2.createWithFlexibleId(
-                item.getProcessItemId(),
-                item.getName(),
-                item.getTWComponentName()
-        );
-        return node;
-    }
-
-    private ProcessEdgeV2 convertLinkToEdgeV2(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Link link) {
-        return ProcessEdgeV2.create(
-                link.getProcessLinkId(),
-                link.getFromProcessItemId(),
-                link.getToProcessItemId()
-        );
-    }
-
-    private ProcessNodeV2 convertBpmnNodeToNodeV2(FlowNode flowNode) {
-        return ProcessNodeV2.createWithFlexibleId(
-                flowNode.getId(),
-                flowNode.getName(),
-                flowNode.getClass().getSimpleName()
-        );
-    }
-
-    private ProcessEdgeV2 convertSequenceFlowToEdgeV2(SequenceFlow sf) {
-        return ProcessEdgeV2.create(sf.getId(), sf.getSourceRef(), sf.getTargetRef());
-    }
-
-    private int countNodesInBpd(Bpd bpd) {
-        int count = 0;
-        if (bpd.getBusinessProcessDiagram() != null &&
-                bpd.getBusinessProcessDiagram().getPools() != null) {
-            for (Pool pool : bpd.getBusinessProcessDiagram().getPools()) {
-                if (pool.getLanes() != null) {
-                    for (Lane lane : pool.getLanes()) {
-                        if (lane.getFlowObjects() != null) {
-                            count += lane.getFlowObjects().size();
-                        }
-                    }
-                }
-            }
-        }
-        return count;
-    }
-
-    private int countEdgesInBpd(Bpd bpd) {
-        if (bpd.getBusinessProcessDiagram() != null &&
-                bpd.getBusinessProcessDiagram().getFlows() != null) {
-            return bpd.getBusinessProcessDiagram().getFlows().size();
-        }
-        return 0;
-    }
-
-    private int countNodesInDefinitions(Definitions def) {
-        if (def.getProcess() != null && def.getProcess().getFlowElements() != null) {
-            return def.getProcess().getFlowElements().size();
-        }
-        return 0;
-    }
-
-    private int countEdgesInDefinitions(Definitions def) {
-        if (def.getProcess() != null && def.getProcess().getSequenceFlows() != null) {
-            return def.getProcess().getSequenceFlows().size();
-        }
-        return 0;
-    }
-
-    private int extractScriptsFromProcess(br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Process process,
-                                          ProcessLogicV2 logic) {
-        int scriptCount = 0;
-        if (process.getItems() != null) {
-            for (br.com.danzeroum.bpmbaw.mapeadorxml.modelo.process.Item item : process.getItems()) {
-                if (item.getTwComponent() != null && item.getTwComponent().getScript() != null) {
-                    // Adicionar script ao logic
-                    ProcessLogicV2.LogicScriptV2 script = new ProcessLogicV2.LogicScriptV2();
-                    script.setId("script-" + item.getProcessItemId());
-                    script.setContent(item.getTwComponent().getScript());
-                    script.setLanguage(ProcessLogicV2.ScriptLanguage.JAVASCRIPT);
-                    logic.getScripts().add(script);
-                    scriptCount++;
-                }
-            }
-        }
-        return scriptCount;
-    }
-
-    private int extractScriptsFromDefinitions(Definitions def, ProcessLogicV2 logic) {
-        // Implementar extração de scripts de BPMN se necessário
-        return 0;
-    }
-
-    private void loadMainProcessOnly(AnalysisConfig config, ProcessGraphV2 graph, ProcessLogicV2 logic) {
-        // Fallback que carrega apenas o processo principal (implementação existente)
-        System.out.println("⚠️ Usando fallback - carregando apenas processo principal");
-        // ... implementação do fallback
     }
 }
