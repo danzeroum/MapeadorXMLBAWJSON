@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  motor:
+    name: BAW Motor (Java 17 + Maven)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Install parent POM
+        run: mvn install -N -q
+
+      - name: Build + test baw-motor
+        run: mvn test -pl baw-motor --no-transfer-progress
+
+      - name: Compile baw-api
+        run: mvn install -pl baw-motor -DskipTests -q && mvn compile -pl baw-api --no-transfer-progress
+
+  frontend:
+    name: Frontend (React 18 + Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: baw-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: baw-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build

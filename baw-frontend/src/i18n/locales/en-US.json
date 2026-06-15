@@ -1,0 +1,129 @@
+{
+  "nav": {
+    "runs": "Analyses",
+    "newAnalysis": "New Analysis",
+    "report": "Report",
+    "aiScore": "AI Score",
+    "graph": "Process Graph",
+    "dataTypes": "Data Types",
+    "logic": "Logic",
+    "issues": "Issues",
+    "security": "Security",
+    "integrity": "Integrity",
+    "admin": "Administration",
+    "users": "Users",
+    "logout": "Logout"
+  },
+  "login": {
+    "title": "Process Veritas",
+    "subtitle": "IBM BAW process analysis",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In",
+    "error": "Invalid credentials"
+  },
+  "runs": {
+    "title": "Analyses",
+    "processName": "Process",
+    "processId": "Process ID",
+    "status": "Status",
+    "startedAt": "Started At",
+    "duration": "Duration",
+    "actions": "Actions",
+    "viewReport": "View Report",
+    "empty": "No analyses found",
+    "emptyDesc": "Create a new analysis to get started",
+    "filterStatus": "Filter by status",
+    "allStatuses": "All statuses",
+    "newAnalysis": "New Analysis",
+    "author": "Author",
+    "file": "File"
+  },
+  "newAnalysis": {
+    "title": "New Analysis",
+    "step1": "File Upload",
+    "step2": "Process Info",
+    "step3": "Review",
+    "step4": "Submitting",
+    "dropzone": "Drag & drop your .twx file here or click to select",
+    "dropzoneActive": "Drop the file here",
+    "processName": "Process Name",
+    "processId": "Process ID",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Start Analysis",
+    "review": "Review the information before submitting",
+    "file": "File",
+    "submitting": "Submitting..."
+  },
+  "runDetail": {
+    "title": "Analysis Details",
+    "status": "Status",
+    "queued": "Queued",
+    "running": "Running",
+    "done": "Done",
+    "failed": "Failed",
+    "error": "Error",
+    "viewReport": "View Full Report",
+    "polling": "Waiting for completion..."
+  },
+  "aiScore": {
+    "title": "AI Score",
+    "overall": "Overall Score",
+    "complexity": "Complexity",
+    "standardization": "Standardization",
+    "automation": "Automation Readiness",
+    "maintainability": "Maintainability"
+  },
+  "graph": {
+    "title": "Process Graph",
+    "nodeDetails": "Node Details",
+    "properties": "Properties",
+    "close": "Close"
+  },
+  "dataTypes": {
+    "title": "Data Types",
+    "name": "Name",
+    "type": "Type",
+    "structure": "Structure",
+    "usedIn": "Used In"
+  },
+  "logic": {
+    "title": "Business Logic"
+  },
+  "issues": {
+    "title": "Issues Found",
+    "severity": "Severity",
+    "description": "Description",
+    "location": "Location",
+    "recommendation": "Recommendation",
+    "empty": "No issues found"
+  },
+  "security": {
+    "title": "Security Analysis",
+    "category": "Category",
+    "risk": "Risk",
+    "description": "Description",
+    "location": "Location",
+    "empty": "No security issues found"
+  },
+  "integrity": {
+    "title": "Report Integrity",
+    "checksums": "Checksums",
+    "section": "Section",
+    "hash": "SHA-256",
+    "overall": "Overall Checksum",
+    "signature": "Digital Signature",
+    "noSignature": "Digital signature not available",
+    "provenance": "Provenance History",
+    "event": "Event",
+    "actor": "Actor",
+    "timestamp": "Timestamp"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "noData": "No data available"
+  }
+}

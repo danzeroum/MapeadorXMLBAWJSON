@@ -10,3 +10,10 @@ baw-api/target/
 .idea/
 *.iml
 *.DS_Store
+
+# Frontend
+baw-frontend/node_modules/
+baw-frontend/dist/
+
+# Claude Code internal
+.claude/

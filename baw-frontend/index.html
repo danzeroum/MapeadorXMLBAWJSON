@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Process Veritas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100..900;1,100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --pv-accent: #0f62fe;
+        --pv-accent-hover: #0050e6;
+        --pv-admin-accent: #5b3ed6;
+        --pv-success: #1f8a5b;
+        --pv-success-bg: #e9f7f0;
+        --pv-warning: #c77700;
+        --pv-warning-bg: #fdf2e0;
+        --pv-error: #d4351c;
+        --pv-error-bg: #fbe7e4;
+        --pv-text: #161a20;
+        --pv-text-secondary: #67707e;
+        --pv-bg: #f6f7f9;
+        --pv-surface: #ffffff;
+        --pv-border: #e9ebef;
+        --pv-radius: 12px;
+      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body, #root { height: 100%; }
+      body {
+        font-family: 'Public Sans', sans-serif;
+        background: var(--pv-bg);
+        color: var(--pv-text);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      code, .mono { font-family: 'IBM Plex Mono', monospace; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
