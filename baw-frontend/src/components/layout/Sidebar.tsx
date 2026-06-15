@@ -111,6 +111,12 @@ export const Sidebar: React.FC = () => {
           {t('nav.admin')}
         </div>
         <NavItem to="/admin/users" icon="👥" label={t('nav.users')} />
+        <NavItem to="/admin/sources" icon="🔌" label={t('nav.sources')} />
+        <NavItem to="/admin/methodology" icon="⚖️" label={t('nav.methodology')} />
+        <NavItem to="/admin/settings" icon="⚙️" label={t('nav.settings')} />
+        <NavItem to="/admin/system-logs" icon="📡" label={t('nav.systemLogs')} />
+        <NavItem to="/admin/audit-log" icon="📜" label={t('nav.auditLog')} />
+        <NavItem to="/admin/usage" icon="📊" label={t('nav.usage')} />
       </div>
     </aside>
   );

@@ -13,6 +13,13 @@ import { LogicPage } from '../pages/report/LogicPage';
 import { IssuesPage } from '../pages/report/IssuesPage';
 import { SecurityPage } from '../pages/report/SecurityPage';
 import { IntegrityPage } from '../pages/report/IntegrityPage';
+import { UsersPage } from '../pages/admin/UsersPage';
+import { SourcesPage } from '../pages/admin/SourcesPage';
+import { MethodologyPage } from '../pages/admin/MethodologyPage';
+import { SettingsPage } from '../pages/admin/SettingsPage';
+import { SystemLogsPage } from '../pages/admin/SystemLogsPage';
+import { AuditLogPage } from '../pages/admin/AuditLogPage';
+import { UsagePage } from '../pages/admin/UsagePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -41,6 +48,13 @@ export function AppRouter() {
         <Route path="/runs/:id/report/data-types" element={<DataTypesPage />} />
         <Route path="/runs/:id/report/logic" element={<LogicPage />} />
         <Route path="/runs/:id/report/security" element={<SecurityPage />} />
+        <Route path="/admin/users" element={<UsersPage />} />
+        <Route path="/admin/sources" element={<SourcesPage />} />
+        <Route path="/admin/methodology" element={<MethodologyPage />} />
+        <Route path="/admin/settings" element={<SettingsPage />} />
+        <Route path="/admin/system-logs" element={<SystemLogsPage />} />
+        <Route path="/admin/audit-log" element={<AuditLogPage />} />
+        <Route path="/admin/usage" element={<UsagePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
