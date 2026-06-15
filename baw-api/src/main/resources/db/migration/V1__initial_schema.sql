@@ -9,6 +9,7 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('ADMIN','ANALISTA','AUDITOR','VISUALIZADOR')),
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    password_hash TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
