@@ -3,6 +3,8 @@
 /output/
 /build/
 /dist/
+/target/
 *.class
 .idea/
 *.iml
+*.DS_Store
