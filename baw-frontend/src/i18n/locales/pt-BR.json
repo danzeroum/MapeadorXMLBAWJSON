@@ -1,0 +1,129 @@
+{
+  "nav": {
+    "runs": "Análises",
+    "newAnalysis": "Nova Análise",
+    "report": "Relatório",
+    "aiScore": "Score de IA",
+    "graph": "Grafo do Processo",
+    "dataTypes": "Tipos de Dados",
+    "logic": "Lógica",
+    "issues": "Problemas",
+    "security": "Segurança",
+    "integrity": "Integridade",
+    "admin": "Administração",
+    "users": "Usuários",
+    "logout": "Sair"
+  },
+  "login": {
+    "title": "Process Veritas",
+    "subtitle": "Análise de processos IBM BAW",
+    "email": "E-mail",
+    "password": "Senha",
+    "submit": "Entrar",
+    "error": "Credenciais inválidas"
+  },
+  "runs": {
+    "title": "Análises",
+    "processName": "Processo",
+    "processId": "ID do Processo",
+    "status": "Status",
+    "startedAt": "Iniciado em",
+    "duration": "Duração",
+    "actions": "Ações",
+    "viewReport": "Ver Relatório",
+    "empty": "Nenhuma análise encontrada",
+    "emptyDesc": "Crie uma nova análise para começar",
+    "filterStatus": "Filtrar por status",
+    "allStatuses": "Todos os status",
+    "newAnalysis": "Nova Análise",
+    "author": "Autor",
+    "file": "Arquivo"
+  },
+  "newAnalysis": {
+    "title": "Nova Análise",
+    "step1": "Upload do Arquivo",
+    "step2": "Informações do Processo",
+    "step3": "Revisão",
+    "step4": "Enviando",
+    "dropzone": "Arraste o arquivo .twx aqui ou clique para selecionar",
+    "dropzoneActive": "Solte o arquivo aqui",
+    "processName": "Nome do Processo",
+    "processId": "ID do Processo",
+    "next": "Próximo",
+    "back": "Voltar",
+    "submit": "Iniciar Análise",
+    "review": "Revise os dados antes de enviar",
+    "file": "Arquivo",
+    "submitting": "Enviando..."
+  },
+  "runDetail": {
+    "title": "Detalhes da Análise",
+    "status": "Status",
+    "queued": "Na fila",
+    "running": "Em execução",
+    "done": "Concluído",
+    "failed": "Falhou",
+    "error": "Erro",
+    "viewReport": "Ver Relatório Completo",
+    "polling": "Aguardando conclusão..."
+  },
+  "aiScore": {
+    "title": "Score de IA",
+    "overall": "Score Geral",
+    "complexity": "Complexidade",
+    "standardization": "Padronização",
+    "automation": "Prontidão para Automação",
+    "maintainability": "Manutenibilidade"
+  },
+  "graph": {
+    "title": "Grafo do Processo",
+    "nodeDetails": "Detalhes do Nó",
+    "properties": "Propriedades",
+    "close": "Fechar"
+  },
+  "dataTypes": {
+    "title": "Tipos de Dados",
+    "name": "Nome",
+    "type": "Tipo",
+    "structure": "Estrutura",
+    "usedIn": "Usado em"
+  },
+  "logic": {
+    "title": "Lógica de Negócio"
+  },
+  "issues": {
+    "title": "Problemas Encontrados",
+    "severity": "Severidade",
+    "description": "Descrição",
+    "location": "Localização",
+    "recommendation": "Recomendação",
+    "empty": "Nenhum problema encontrado"
+  },
+  "security": {
+    "title": "Análise de Segurança",
+    "category": "Categoria",
+    "risk": "Risco",
+    "description": "Descrição",
+    "location": "Localização",
+    "empty": "Nenhum problema de segurança encontrado"
+  },
+  "integrity": {
+    "title": "Integridade do Relatório",
+    "checksums": "Checksums",
+    "section": "Seção",
+    "hash": "SHA-256",
+    "overall": "Checksum Geral",
+    "signature": "Assinatura Digital",
+    "noSignature": "Assinatura digital não disponível",
+    "provenance": "Histórico de Proveniência",
+    "event": "Evento",
+    "actor": "Ator",
+    "timestamp": "Data/Hora"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "retry": "Tentar novamente",
+    "noData": "Sem dados disponíveis"
+  }
+}
