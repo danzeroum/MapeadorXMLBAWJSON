@@ -33,6 +33,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/audit-log/**").hasAnyRole("ADMIN", "AUDITOR")
                 .requestMatchers("/api/v1/system/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/sources/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/sources/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/sources/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/methodology/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/settings/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder)));
