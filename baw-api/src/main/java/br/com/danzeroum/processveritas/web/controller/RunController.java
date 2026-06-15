@@ -5,6 +5,7 @@ import br.com.danzeroum.processveritas.domain.model.RunEntity.RunStatus;
 import br.com.danzeroum.processveritas.domain.model.UserEntity;
 import br.com.danzeroum.processveritas.domain.repository.UserRepository;
 import br.com.danzeroum.processveritas.service.AuditService;
+import br.com.danzeroum.processveritas.service.RateLimitService;
 import br.com.danzeroum.processveritas.service.RunService;
 import br.com.danzeroum.processveritas.web.dto.response.RunResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,6 +41,9 @@ public class RunController {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createRun(
             @RequestParam("processName") String processName,
@@ -59,6 +63,12 @@ public class RunController {
         }
 
         String email = jwt.getSubject();
+
+        if (!rateLimitService.isAllowed(email)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("error", "Rate limit exceeded: max 10 analyses per hour"));
+        }
+
         UserEntity author = userRepository.findByEmail(email).orElse(null);
 
         try {
