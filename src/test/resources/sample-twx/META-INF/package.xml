@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://lombardisoftware.com/schema/teamworks/7.0.0/package.xsd"
+         buildVersion="1.0.0" buildId="test-build-001"
+         containsECM="false" containsBPMN2="false">
+  <objects xmlns="">
+    <object id="2064.abcdef01" name="Test Process" type="BPD"/>
+  </objects>
+</package>

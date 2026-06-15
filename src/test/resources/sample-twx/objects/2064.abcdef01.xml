@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<teamworks>
+  <bpd id="2064.abcdef01" name="Test Process">
+    <description>Minimal test BPD: start → task → end</description>
+    <BusinessProcessDiagram id="bpd-diag-01">
+      <name>Test Process</name>
+      <pool id="pool-01">
+        <name>Default Process</name>
+        <lane id="lane-01">
+          <name>Default Lane</name>
+          <flowObject id="start-01" componentType="startEvent">
+            <name>Start</name>
+            <outputPort id="op-start-01">
+              <flow ref="flow-01"/>
+            </outputPort>
+          </flowObject>
+          <flowObject id="task-01" componentType="activityTask">
+            <name>Process Request</name>
+            <inputPort id="ip-task-01">
+              <flow ref="flow-01"/>
+            </inputPort>
+            <outputPort id="op-task-01">
+              <flow ref="flow-02"/>
+            </outputPort>
+          </flowObject>
+          <flowObject id="end-01" componentType="endEvent">
+            <name>End</name>
+            <inputPort id="ip-end-01">
+              <flow ref="flow-02"/>
+            </inputPort>
+          </flowObject>
+        </lane>
+      </pool>
+      <flow id="flow-01"/>
+      <flow id="flow-02"/>
+    </BusinessProcessDiagram>
+  </bpd>
+</teamworks>
