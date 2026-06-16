@@ -31,7 +31,7 @@ public class AuditLogEntity {
     @Column(name = "detail", columnDefinition = "jsonb")
     private String detail;
 
-    @Column(name = "ip_address")
+    @Column(name = "ip_address", columnDefinition = "inet")
     private String ipAddress;
 
     @Column(name = "occurred_at", nullable = false, updatable = false)
