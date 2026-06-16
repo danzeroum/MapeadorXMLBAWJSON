@@ -12,6 +12,12 @@
     "integrity": "Integrity",
     "admin": "Administration",
     "users": "Users",
+    "sources": "Data Sources",
+    "methodology": "Methodology",
+    "settings": "Settings",
+    "systemLogs": "System Logs",
+    "auditLog": "Audit Log",
+    "usage": "Usage & Billing",
     "logout": "Logout"
   },
   "login": {
@@ -124,6 +130,82 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "retry": "Retry",
-    "noData": "No data available"
+    "noData": "No data available",
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Deactivate",
+    "actions": "Actions",
+    "status": "Status",
+    "createdAt": "Created At",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "admin": {
+    "users": {
+      "title": "Users & Roles",
+      "email": "Email",
+      "name": "Name",
+      "role": "Role",
+      "active": "Active",
+      "createUser": "New User",
+      "deactivate": "Deactivate",
+      "empty": "No users found"
+    },
+    "sources": {
+      "title": "Data Sources",
+      "name": "Name",
+      "type": "Type",
+      "host": "Host",
+      "status": "Status",
+      "createSource": "New Source",
+      "deactivate": "Deactivate",
+      "empty": "No sources configured",
+      "credentials": "Credentials (JSON)"
+    },
+    "methodology": {
+      "title": "Score Methodology",
+      "version": "Version",
+      "weights": "Weights (JSON)",
+      "active": "Active",
+      "createVersion": "New Version",
+      "warning": "This change does not recalculate existing reports. New analyses will use the new methodology.",
+      "empty": "No methodology configured"
+    },
+    "settings": {
+      "title": "Platform Settings",
+      "key": "Key",
+      "value": "Value (JSON)",
+      "save": "Save",
+      "empty": "No settings found"
+    },
+    "systemLogs": {
+      "title": "System Logs",
+      "connecting": "Connecting to log stream...",
+      "connected": "Connected — receiving live logs",
+      "disconnected": "Disconnected",
+      "pause": "Pause",
+      "resume": "Resume",
+      "clear": "Clear",
+      "empty": "Waiting for logs..."
+    },
+    "auditLog": {
+      "title": "Audit Log",
+      "actor": "Actor",
+      "action": "Action",
+      "resource": "Resource",
+      "ip": "IP",
+      "occurredAt": "Date/Time",
+      "filterActor": "Filter by email",
+      "empty": "No records found"
+    },
+    "usage": {
+      "title": "Usage & Billing",
+      "period": "Period",
+      "runCount": "Analyses",
+      "storageMb": "Storage (MB)",
+      "userId": "User ID",
+      "empty": "No usage records found"
+    }
   }
 }

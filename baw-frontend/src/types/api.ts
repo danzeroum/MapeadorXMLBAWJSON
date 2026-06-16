@@ -114,3 +114,45 @@ export interface LogicSection {
   language: string;
   code: string;
 }
+
+export interface Source {
+  id: string;
+  name: string;
+  type: 'TWX_FILE' | 'BAW_SERVER';
+  host?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+}
+
+export interface Methodology {
+  id: string;
+  version: string;
+  weights: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface Setting {
+  key: string;
+  value: string;
+  updatedAt: string;
+}
+
+export interface UsageRecord {
+  id: string;
+  userId: string;
+  period: string;
+  runCount: number;
+  storageMb?: number;
+}
+
+export interface AuditLogEntry {
+  id: number;
+  actorId?: string;
+  actorEmail: string;
+  action: string;
+  resource: string;
+  detail?: string;
+  ipAddress?: string;
+  occurredAt: string;
+}

@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -21,9 +22,13 @@ public class SecurityConfig {
     @Autowired
     private JwtDecoder jwtDecoder;
 
+    @Autowired
+    private CorsConfigurationSource corsConfigurationSource;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
@@ -33,6 +38,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/audit-log/**").hasAnyRole("ADMIN", "AUDITOR")
                 .requestMatchers("/api/v1/system/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/sources/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/sources/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/sources/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/methodology/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/settings/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder)));

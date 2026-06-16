@@ -12,6 +12,12 @@
     "integrity": "Integridade",
     "admin": "Administração",
     "users": "Usuários",
+    "sources": "Fontes de Dados",
+    "methodology": "Metodologia",
+    "settings": "Configurações",
+    "systemLogs": "Logs do Sistema",
+    "auditLog": "Audit Log",
+    "usage": "Uso & Faturamento",
     "logout": "Sair"
   },
   "login": {
@@ -124,6 +130,82 @@
     "loading": "Carregando...",
     "error": "Ocorreu um erro",
     "retry": "Tentar novamente",
-    "noData": "Sem dados disponíveis"
+    "noData": "Sem dados disponíveis",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "create": "Criar",
+    "delete": "Desativar",
+    "actions": "Ações",
+    "status": "Status",
+    "createdAt": "Criado em",
+    "active": "Ativo",
+    "inactive": "Inativo"
+  },
+  "admin": {
+    "users": {
+      "title": "Usuários & Papéis",
+      "email": "E-mail",
+      "name": "Nome",
+      "role": "Papel",
+      "active": "Ativo",
+      "createUser": "Novo Usuário",
+      "deactivate": "Desativar",
+      "empty": "Nenhum usuário encontrado"
+    },
+    "sources": {
+      "title": "Fontes de Dados",
+      "name": "Nome",
+      "type": "Tipo",
+      "host": "Host",
+      "status": "Status",
+      "createSource": "Nova Fonte",
+      "deactivate": "Desativar",
+      "empty": "Nenhuma fonte configurada",
+      "credentials": "Credenciais (JSON)"
+    },
+    "methodology": {
+      "title": "Metodologia de Pontuação",
+      "version": "Versão",
+      "weights": "Pesos (JSON)",
+      "active": "Ativa",
+      "createVersion": "Nova Versão",
+      "warning": "Esta mudança não recalcula relatórios existentes. Novas análises usarão a nova metodologia.",
+      "empty": "Nenhuma metodologia configurada"
+    },
+    "settings": {
+      "title": "Configurações da Plataforma",
+      "key": "Chave",
+      "value": "Valor (JSON)",
+      "save": "Salvar",
+      "empty": "Nenhuma configuração encontrada"
+    },
+    "systemLogs": {
+      "title": "Logs do Sistema",
+      "connecting": "Conectando ao stream de logs...",
+      "connected": "Conectado — recebendo logs em tempo real",
+      "disconnected": "Desconectado",
+      "pause": "Pausar",
+      "resume": "Retomar",
+      "clear": "Limpar",
+      "empty": "Aguardando logs..."
+    },
+    "auditLog": {
+      "title": "Audit Log",
+      "actor": "Ator",
+      "action": "Ação",
+      "resource": "Recurso",
+      "ip": "IP",
+      "occurredAt": "Data/Hora",
+      "filterActor": "Filtrar por e-mail",
+      "empty": "Nenhum registro encontrado"
+    },
+    "usage": {
+      "title": "Uso & Faturamento",
+      "period": "Período",
+      "runCount": "Análises",
+      "storageMb": "Storage (MB)",
+      "userId": "Usuário ID",
+      "empty": "Nenhum registro de uso encontrado"
+    }
   }
 }
